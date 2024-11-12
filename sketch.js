@@ -20,13 +20,22 @@ const colors = {
   teal: [51, 153, 153]
 }
 
+const ids = {
+  acceleration: 5,
+  speedSensor: 1000,
+  motor: 2000,
+  speedometer: 1900
+}
+
 const Node = {
   name: "Default",
   id: 222,              // max = 2047
   state: RECEIVING,
-  messagePointer: 0,
-  data: 0,
+  sendFramePointer: 0,
+  receivedFrameRegister: 0,
+  sendFrameRegister: 0,
   key: "nan",
+  data: 0,
   x: 10,
   y: 10,
   printDetails() {
@@ -38,7 +47,7 @@ const Node = {
 }
 
 const Frame = {
-  id: 10,
+  id: 10,               // 11 bits
   rtr: 1,
   ide: 0,
   reserved: 0,
@@ -85,6 +94,12 @@ function setupNodes() {
   n.id = 2000;
   n.x = 180;
   n.y = 150;
+  nodes.push(n);
+  n = Object.create(Node);
+  n.name = "Speedometer";
+  n.id = 1900;
+  n.x = 350;
+  n.y = 50;
   nodes.push(n);
 }
 
@@ -180,6 +195,7 @@ function updateClock() {
     // console.log("p = " + pause);
     console.log( previousFrame.id );
     console.log( extendBits(previousFrame.id, 11) );
+    console.log(ids['acceleration']);
     // nodes[0].printDetails();
     // console.log( nodes[1].getDetails() );
   }
