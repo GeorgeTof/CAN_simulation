@@ -1,6 +1,7 @@
 const WIDTH = 1400;
 const HEIGHT = 660;
 const TRANSMITTING = 1, RECEIVING = 0 /* AKA idle */ , WAITING = 2;
+const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, EOF = 4, IDLE = 5;
 
 const colors = {
   red: [255, 51, 51],
@@ -48,18 +49,56 @@ const Node = {
 
 const Frame = {
   id: 10,               // 11 bits
-  rtr: 1,
+  rtr: 0,
   ide: 0,
   reserved: 0,
   dlc: 1,               // max = 15 bytes
-  dataField: 100,
+  dataField: 7,
   crc: 12,              // 15 bits
   crcD: 1,
   ack: 1,
   ackD: 1,
   eof: 127,
-  ifs: 7
+  ifs: 7,
+  partialFrame: "",
+  bitFrame: "",
+  computePartialFrame() {
+    let pf = "1";
+    pf += extendBits(this.id, 11);
+    console.log("adding ", extendBits(this.id, 11));
+    console.log("current: ", pf);
+    pf += extendBits(this.rtr, 1);
+    pf += extendBits(this.ide, 1);
+    pf += extendBits(this.reserved, 1);
+    pf += extendBits(this.dlc, 4);
+    pf += extendBits(this.dataField, (this.dlc * 8));
+    this.partialFrame = pf;
+  },
+  computeFrame() {
+    console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
+    let f = this.partialFrame;
+    f += calculateCRC_dummy(this.partialFrame);
+    f += extendBits(this.crcD, 1);
+    f += extendBits(this.ack, 1);
+    f += extendBits(this.ackD, 1);
+    f += extendBits(this.eof, 7);
+    f += extendBits(this.ifs, 3);
+    this.bitFrame = f;
+  },
+  constructDataFrame(newId, newData) {
+    this.id = newId;
+    this.dlc = newData/8+1;
+    this.dataField = newData;
+  },
+  constructRemoteFrame(newId, dataLength) {
+    this.id = newId;
+    this.dlc = dataLength;
+  }
 }
+
+/*
+    1 00000000101 0 0 0 0001 00001111
+*/
 
 const car = {
   speed: 0,
@@ -67,8 +106,15 @@ const car = {
   temperature: 20
 }
 
+const bus = {
+  state: IDLE,
+  currentFrame: "",
+  consecutiveBitsOfSameParity: 0
+}
+
 
 let clock = 1;
+let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
 let previousFrame = Object.create(Frame);
@@ -108,6 +154,20 @@ function setup() {
   setupNodes();
 }
 
+function updateData() {
+  // console.log("Clock became ", clock);
+  f = Object.create(Frame);
+  n = nodes[0];
+  console.log("creating the frame for node ", n.name);
+  f.id = n.id;
+  f.dlc = 1;
+  f.dataField = 15; 
+  f.computePartialFrame();
+  console.log("partial frame: ", f.partialFrame);
+  f.computeFrame();
+  console.log("complete frame: ", f.bitFrame);
+  
+}
 
 
 function draw() {
@@ -117,9 +177,18 @@ function draw() {
 
   background(220, 220, 220);
 
+  if(clock > lastClock){
+    lastClock = clock;
+    updateData();
+  }
+
   printNodes();
 
   printPreviousFrame();
+
+  printBusMessage();
+
+  printNodesToTransmit();
 
   updateClock();
 }
@@ -138,7 +207,7 @@ function printPreviousFrame() {
   text("Previous frame:", 50, 300);
 
   fill(colorOf("brown"));
-  text(extendBits(1), x, 300);
+  text(extendBits(1, 1), x, 300);
   x += (7 + 2);
 
   fill(colorOf("green"));
@@ -172,6 +241,16 @@ function printPreviousFrame() {
   fill("black");
 }
 
+function printBusMessage() {
+  textSize(15);
+  text("Bus data: ", 50, 350);
+}
+
+function printNodesToTransmit() {
+  textSize(15);
+  text("Nodes Transmitting: ", 50, 440);
+}
+
 function printNodes() {
   const size = 12;
   for (let i=0; i<nodes.length; i++){
@@ -193,9 +272,9 @@ function updateClock() {
     clock ++;
 
     // console.log("p = " + pause);
-    console.log( previousFrame.id );
-    console.log( extendBits(previousFrame.id, 11) );
-    console.log(ids['acceleration']);
+    // console.log( previousFrame.id );
+    // console.log( extendBits(previousFrame.id, 11) );
+    // console.log(ids['acceleration']);
     // nodes[0].printDetails();
     // console.log( nodes[1].getDetails() );
   }
@@ -217,4 +296,27 @@ function extendBits(nr, size) {
     result += "0";
   result += binaryString;
   return result;
+}
+
+function calculateCRC_dummy(data) {
+  return "101010101010101";
+}
+
+function calculateCRC(data, poly = 0x4599, crcLen = 15) {
+    // Convert the data string to an integer, and shift it left to make space for the CRC bits
+    let dataInt = parseInt(data, 2) << crcLen;
+
+    // Align the polynomial with the leftmost bit of the data
+    poly = poly << (data.length + crcLen - 1);
+
+    // Perform bitwise division (modulo-2 division)
+    while ((dataInt.toString(2).length) > crcLen) {
+        if ((dataInt & (1 << (dataInt.toString(2).length - 1))) !== 0) {
+            dataInt ^= poly; // XOR with polynomial
+        }
+        poly >>= 1; // Shift polynomial right to continue division
+    }
+
+    // Convert the remainder to a binary string of length crcLen
+    return dataInt.toString(2).padStart(crcLen, '0');
 }
