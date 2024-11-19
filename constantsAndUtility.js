@@ -26,7 +26,3 @@ function colorOf(colorName) {
   let actualC = color(c[0], c[1], c[2]);
   return actualC;
 }
-
-function nextFramePart(part) {
-  return (part+1) % 6;            // ARBITRATION, CONTROL, ...
-}
