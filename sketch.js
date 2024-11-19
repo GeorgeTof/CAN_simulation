@@ -31,6 +31,8 @@ const Node = {
     newFrame.computeFrame();
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
+    nodesToTransmit.add(this);
+    this.state = WAITING;
   }
 }
 
@@ -97,6 +99,7 @@ const car = {
 const bus = {
   state: IDLE,
   currentFrame: "",
+  frameToDisplay: "",
   consecutiveBitsOfSameParity: 0
 }
 
@@ -117,19 +120,22 @@ function setup() {
 }
 
 function updateData() {
-  // console.log("Clock became ", clock);
-  // DEMO FOR FRAME BIT ENCODING:
-  // f = Object.create(Frame);
-  // n = nodes[0];
-  // console.log("creating the frame for node ", n.name);
-  // f.id = n.id;
-  // f.dlc = 1;
-  // f.dataField = 15; 
-  // f.computePartialFrame();
-  // console.log("partial frame: ", f.partialFrame);
-  // f.computeFrame();
-  // console.log("complete frame: ", f.bitFrame);
-
+  // debug here
+  //
+  if(bus.state == IDLE){
+    if(nodesToTransmit.size != 0){
+      bus.state = ARBITRATION;
+      nodesToTransmit.forEach((n, k , set) => {
+        n.state = TRANSMITTING;
+      });
+      bus.frameToDisplay += '1';
+      bus.state = nextFramePart(bus.state);
+    }
+  }
+  if(bus.state == ARBITRATION) {
+    let x = 19;
+    // TODO LAST CHECKPOINT
+  }
   
 }
 
@@ -139,7 +145,6 @@ function checkTransmittingNodes() {
     if(n.periodForTransmission != 0){
       if(clock % n.periodForTransmission == 0){
         n.generateDataFrame(car[n.fieldForTransmission]);
-        nodesToTransmit.add(n);
       }
     }
   }
@@ -179,7 +184,6 @@ function keyPressed(){
       if(n.defaultData != -1){
         // TODO ADD SPECFIC FUNCTIONALITY FOR NODES REQUESTING DATA
         n.generateDataFrame(n.defaultData);
-        nodesToTransmit.add(n);
       }
       else{
         pressedKeys.set(key, millis());
@@ -213,7 +217,13 @@ function keyReleased(){
 
 function printBusMessage() {
   textSize(15);
-  text("Bus data: ", 50, 350);
+  let y = 350;
+  text("Bus data: ", 50, y);
+  let x = 150;
+  for(const bit in bus.frameToDisplay){
+    text(bit, x, y);
+    x+=20;
+  }
 }
 
 function printNodesToTransmit() {
@@ -222,11 +232,9 @@ function printNodesToTransmit() {
   y = 440;
   for (let tn of nodesToTransmit) {
     let label = ">>" + tn.name + ": ";
-    if(tn.sendFramePointer == 0){
-      label += "Waiting";
-    }
-    else{
-      text(tn.sendFrameRegister.slice(0, sendFramePointer), 250, y);
+    label += tn.sendFrameRegister.slice(0, tn.sendFramePointer);
+    if(tn.state == WAITING){
+      label += " -- Waiting";
     }
     text(label, 200, y);
     y+=20;
