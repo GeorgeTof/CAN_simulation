@@ -1,5 +1,5 @@
 function setupNodes(nodes) {
-  let n = Object.create(Node);
+  let n = Object.create(Node);      // sketchy ca Node e declarat in sketch :/
   n.name = "Acceleration";
   n.id = 5;
   n.key = 'w';
@@ -11,6 +11,7 @@ function setupNodes(nodes) {
   n.id = 1000;
   n.x = 80;
   n.y = 150;
+  n.periodForTransmission = 10;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor";

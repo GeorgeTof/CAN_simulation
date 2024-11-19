@@ -14,6 +14,8 @@ const Node = {
   sendFrameRegister: 0,
   key: "nan",
   data: 0,
+  periodForTransmission: 0,
+  fieldForTransmission: 'speed',
   x: 10,
   y: 10,
   printDetails() {
@@ -21,6 +23,13 @@ const Node = {
   },
   getDetails() {
     return (this.name + " " + this.id + " " + this.key + " " + this.state + " ");
+  },
+  generateDataFrame(data) {
+    let newFrame = Object.create(Frame);
+    newFrame.constructDataFrame(this.id, data);
+    newFrame.computeFrame();
+    this.sendFrameRegister = newFrame.bitFrame;
+    this.sendFramePointer = 0;
   }
 }
 
@@ -42,8 +51,8 @@ const Frame = {
   computePartialFrame() {
     let pf = "1";
     pf += extendBits(this.id, 11);
-    console.log("adding ", extendBits(this.id, 11));
-    console.log("current: ", pf);
+    // console.log("adding ", extendBits(this.id, 11));
+    // console.log("current: ", pf);
     pf += extendBits(this.rtr, 1);
     pf += extendBits(this.ide, 1);
     pf += extendBits(this.reserved, 1);
@@ -52,7 +61,8 @@ const Frame = {
     this.partialFrame = pf;
   },
   computeFrame() {
-    console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
+    this.computePartialFrame();   // COMPLETE FUNCTIONALITY NOT TESTED
+    // console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
     let f = this.partialFrame;
     f += calculateCRC_dummy(this.partialFrame);
     f += extendBits(this.crcD, 1);
@@ -94,6 +104,7 @@ let clock = 1;
 let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
+const nodesToTransmit = new Set();
 let previousFrame = Object.create(Frame);
 let pause = 0;
 
@@ -105,20 +116,32 @@ function setup() {
 
 function updateData() {
   // console.log("Clock became ", clock);
-  f = Object.create(Frame);
-  n = nodes[0];
-  console.log("creating the frame for node ", n.name);
-  f.id = n.id;
-  f.dlc = 1;
-  f.dataField = 15; 
-  f.computePartialFrame();
-  console.log("partial frame: ", f.partialFrame);
-  f.computeFrame();
-  console.log("complete frame: ", f.bitFrame);
+  // DEMO FOR FRAME BIT ENCODING:
+  // f = Object.create(Frame);
+  // n = nodes[0];
+  // console.log("creating the frame for node ", n.name);
+  // f.id = n.id;
+  // f.dlc = 1;
+  // f.dataField = 15; 
+  // f.computePartialFrame();
+  // console.log("partial frame: ", f.partialFrame);
+  // f.computeFrame();
+  // console.log("complete frame: ", f.bitFrame);
 
   
 }
 
+function checkTransmittingNodes() {
+  for (let i=0; i<nodes.length; i++){
+    let n=nodes[i];
+    if(n.periodForTransmission != 0){
+      if(clock % n.periodForTransmission == 0){
+        n.generateDataFrame(car[n.fieldForTransmission]);
+        nodesToTransmit.add(nodes[i]);
+      }
+    }
+  }
+}
 
 function draw() {
   if(pause == 1) {
@@ -130,6 +153,7 @@ function draw() {
   if(clock > lastClock){
     lastClock = clock;
     updateData();
+    checkTransmittingNodes();
   }
 
   printNodes(nodes);
@@ -157,6 +181,18 @@ function printBusMessage() {
 function printNodesToTransmit() {
   textSize(15);
   text("Nodes Transmitting: ", 50, 440);
+  y = 440;
+  for (let tn of nodesToTransmit) {
+    let label = ">>" + tn.name + ": ";
+    if(tn.sendFramePointer == 0){
+      label += "Waiting";
+    }
+    else{
+      text(tn.sendFrameRegister.slice(0, sendFramePointer), 250, y);
+    }
+    text(label, 200, y);
+    y+=10;
+  }
 }
 
 function updateClock() {
