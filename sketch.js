@@ -13,7 +13,8 @@ const Node = {
   receivedFrameRegister: 0,
   sendFrameRegister: 0,
   key: "nan",
-  data: 0,
+  defaultData: 1,       // -1 for dynamic ones
+  dataRegister: 0,
   periodForTransmission: 0,
   fieldForTransmission: 'speed',
   x: 10,
@@ -105,6 +106,7 @@ let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
+let pressedKeys = new Map();
 let previousFrame = Object.create(Frame);
 let pause = 0;
 
@@ -137,7 +139,7 @@ function checkTransmittingNodes() {
     if(n.periodForTransmission != 0){
       if(clock % n.periodForTransmission == 0){
         n.generateDataFrame(car[n.fieldForTransmission]);
-        nodesToTransmit.add(nodes[i]);
+        nodesToTransmit.add(n);
       }
     }
   }
@@ -167,9 +169,45 @@ function draw() {
   updateClock();
 }
 
-function keyPressed () {
+function keyPressed(){
   if (key == 'p') {
     pause = (pause + 1) % 2;
+  }
+  if (pause == 0){
+    let n = findNodeByKey(nodes, key);
+    if(n != null){
+      if(n.defaultData != -1){
+        // TODO ADD SPECFIC FUNCTIONALITY FOR NODES REQUESTING DATA
+        n.generateDataFrame(n.defaultData);
+        nodesToTransmit.add(n);
+      }
+      else{
+        pressedKeys.set(key, millis());
+      }
+    }
+  }
+}
+
+function keyReleased(){
+  if(pause == 1){
+    return;
+  }
+  let n = findNodeByKey(nodes, key);
+  if(n != null){
+    if(n.defaultData == -1){
+      if(pressedKeys.has(key) == false){
+        console.log("ERROR, key press not detected for key "+key);
+        return;
+      }
+      let satrtTime = pressedKeys.get(key);
+      let timePassed = millis() - satrtTime;
+      pressedKeys.delete(key);
+      console.log("key "+key+" pressed for "+Math.floor(timePassed/60)+" time units (" + (timePassed/1000) + " seconds)");
+      n.dataRegister += Math.floor(timePassed/60);      // TODO clear data after successful transmission
+      console.log("node "+n.name+" sending data frame containing the data "+n.dataRegister);   
+      n.generateDataFrame(n.dataRegister);
+      nodesToTransmit.add(n);
+    }
   }
 }
 
@@ -191,8 +229,16 @@ function printNodesToTransmit() {
       text(tn.sendFrameRegister.slice(0, sendFramePointer), 250, y);
     }
     text(label, 200, y);
-    y+=10;
+    y+=20;
   }
+}
+
+function findNodeByKey(nodes, key) {
+  for (let i=0; i<nodes.length; i++){
+    if(nodes[i].key === key)
+      return nodes[i];
+  }
+  return null;
 }
 
 function updateClock() {

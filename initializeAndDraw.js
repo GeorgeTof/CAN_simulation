@@ -3,6 +3,7 @@ function setupNodes(nodes) {
   n.name = "Acceleration";
   n.id = 5;
   n.key = 'w';
+  n.defaultData = -1;
   n.x = 50;
   n.y = 50;
   nodes.push(n);
