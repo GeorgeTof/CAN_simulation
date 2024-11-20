@@ -3,6 +3,13 @@ const HEIGHT = 660;
 const TRANSMITTING = 1, RECEIVING = 0 /* AKA idle */ , WAITING = 2;
 const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, EOF = 4, IDLE = 5;
 
+const ids = {
+  acceleration: 5,
+  speedSensor: 1000,
+  motor: 2000,
+  speedometer: 1900
+}
+
 const colors = {
   red: [255, 51, 51],
   green: [51, 200, 51],
