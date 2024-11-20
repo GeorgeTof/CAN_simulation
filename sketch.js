@@ -6,6 +6,7 @@ const Node = {
   sendFramePointer: 0,
   sendFrameRegister: 0,
   receivedFrameRegister: 0,
+  idSensitivityList: null,
   key: "nan",
   defaultData: 1,       // -1 for dynamic ones
   dataRegister: 0,
@@ -236,6 +237,7 @@ function updateData() {
     winnerNode.incrementSendFramePointer();                           // TODO! implement logic for storing the frame in interested nodes and in previous frame
     if(bus.frameToDisplay.length == 7){
       bus.nextFramePart();
+      previousFrame = winnerNode.sendFrameInMemory;
       winnerNode.endTransmission();
     }
   }
@@ -408,5 +410,5 @@ function calculateCRC(data, poly = 0x4599, crcLen = 15) {
 
 /*
   NOTES:
-  nodes aren t allowed to generate a new frame while transmitting one on the bus
+  nodes aren't allowed to generate a new frame while transmitting one on the bus
 */
