@@ -2,9 +2,10 @@ const Node = {
   name: "Default",
   id: 222,              // max = 2047
   state: RECEIVING,
+  sendFrameInMemory: null,
   sendFramePointer: 0,
-  receivedFrameRegister: 0,
   sendFrameRegister: 0,
+  receivedFrameRegister: 0,
   key: "nan",
   defaultData: 1,       // -1 for dynamic ones
   dataRegister: 0,
@@ -21,6 +22,7 @@ const Node = {
   generateDataFrame(data) {
     let newFrame = Object.create(Frame);
     newFrame.constructDataFrame(this.id, data);
+    this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
@@ -32,7 +34,16 @@ const Node = {
   },
   incrementSendFramePointer(){
     this.sendFramePointer++;
+  },
+  endTransmission() {
+    this.state = RECEIVING;
+    this.dataRegister = 0;
+    this.sendFrameInMemory = null;
+    this.sendFrameRegister = "";
+    this.sendFramePointer = 0;
+    nodesToTransmit.delete(this);
   }
+
 }
 
 const Frame = {
@@ -76,12 +87,29 @@ const Frame = {
   },
   constructDataFrame(newId, newData) {
     this.id = newId;
-    this.dlc = newData/8+1;
+    newData = Math.floor(newData);      // maybe redundant
+    this.dlc = Math.floor(newData/8+1);
     this.dataField = newData;
   },
   constructRemoteFrame(newId, dataLength) {
     this.id = newId;
     this.dlc = dataLength;
+  },
+  displayData() {
+    return `
+ID: ${this.id}
+RTR: ${this.rtr}
+IDE: ${this.ide}
+Reserved: ${this.reserved}
+DLC: ${this.dlc}
+Data Field: ${this.dataField}
+CRC: ${this.crc}
+CRC Delimiter: ${this.crcD}
+ACK: ${this.ack}
+ACK Delimiter: ${this.ackD}
+EOF: ${this.eof}
+IFS: ${this.ifs}
+Bit Frame: ${this.bitFrame}`;
   }
 }
 
@@ -100,10 +128,17 @@ const bus = {
   currentFrame: "",
   frameToDisplay: "",
   consecutiveBitsOfSameParity: 0,
+  changedState: false,
   nextFramePart(){
-    this.currentFrame += this.frameToDisplay;
-    this.frameToDisplay = "";
     this.state = (this.state+1) % 6; 
+    this.changedState = true;
+  },
+  clearFrameToDisplay(){
+    if(this.changedState == true){
+      this.currentFrame += this.frameToDisplay;
+      this.frameToDisplay = "";
+      this.changedState = false;
+    }
   }
 }
 
@@ -116,6 +151,7 @@ const nodesToTransmit = new Set();
 let pressedKeys = new Map();
 let previousFrame = Object.create(Frame);
 let pause = 0;
+let winnerNode = null;
 
 
 function setup() {
@@ -142,7 +178,7 @@ function updateData() {
     }
     return;
   }
-  if(bus.state == ARBITRATION) {
+  else if(bus.state == ARBITRATION) {
     let busValue = 1;
     nodesToTransmit.forEach((n) => {
       if(n.state == TRANSMITTING){
@@ -159,11 +195,50 @@ function updateData() {
         n.incrementSendFramePointer();
       }
     });
-    if(bus.frameToDisplay.length == 12){      // TODO change with condition variable for stuff bits
+    if(bus.frameToDisplay.length == 12) {      // TODO change with condition variable for stuff bits
+      nodesToTransmit.forEach((n) => {
+        if(n.state == TRANSMITTING){
+          winnerNode = n;
+        }
+      });
+      console.log("The node that won the arbitration is " + winnerNode.name + "\ntransmitting the frame: "+winnerNode.sendFrameInMemory.displayData());
       bus.nextFramePart();
     }
   }
-  
+  else if(bus.state == CONTROL) {
+    bus.clearFrameToDisplay();
+    // console.log("The node that won the arbitration is "+winnerNode.name);
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    winnerNode.incrementSendFramePointer();
+    if(bus.frameToDisplay.length == 7){
+      bus.nextFramePart();
+    }
+  }
+  else if(bus.state == DATA) {
+    bus.clearFrameToDisplay();
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    winnerNode.incrementSendFramePointer();
+    if(bus.frameToDisplay.length == 8*winnerNode.sendFrameInMemory.dlc){
+      bus.nextFramePart();
+    }
+  }
+  else if(bus.state == CRC) {
+    bus.clearFrameToDisplay();
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    winnerNode.incrementSendFramePointer();                           // TODO! implement logic for ack bit
+    if(bus.frameToDisplay.length == 18){
+      bus.nextFramePart();
+    }
+  }
+  else if(bus.state == EOF) {
+    bus.clearFrameToDisplay();
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    winnerNode.incrementSendFramePointer();                           // TODO! implement logic for storing the frame in interested nodes and in previous frame
+    if(bus.frameToDisplay.length == 7){
+      bus.nextFramePart();
+      winnerNode.endTransmission();
+    }
+  }
 }
 
 function checkTransmittingNodes() {
