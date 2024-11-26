@@ -122,7 +122,8 @@ Bit Frame: ${this.bitFrame}`;
 const car = {
   speed: 0,
   motorLoad: 0,
-  temperature: 20
+  temperature: 20,
+  started: false
 }
 
 const bus = {
@@ -259,7 +260,20 @@ function checkTransmittingNodes() {
 }
 
 function updateSimulation() {
-  
+  if(car.motorLoad > 0){
+    car.speed += 2;
+    car.motorLoad -= 5;
+    car.motorLoad = max(car.motorLoad, 0);
+    car.temperature += 1;
+  }
+  else{
+    car.speed = max(car.speed - 1, 0);
+    car.temperature -=1;
+    if(car.started == true)
+      car.temperature = max (car.temperature, 30);
+    else
+      car.temperature = max (car.temperature, 20);
+  }
 }
 
 function draw() {

@@ -104,4 +104,8 @@ function printCarParameters() {
   y+=15;
   text("engine temperature:", x, y);
   text(car.temperature, xVal, y);
+  y+=15;
+  text("simulation speed:", x, y);
+  text((1/period*100).toFixed(1), xVal, y);            
+
 }
