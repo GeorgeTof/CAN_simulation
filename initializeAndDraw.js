@@ -32,45 +32,38 @@ function printPreviousFrame(previousFrame) {
   if(previousFrame == null){
     return;
   }
-  // TODO increase text size
+  let mainSize = 14;
+  let x = 160, y = 300;
   textSize(14);
-  // fill(colorOf("green"));
-  let x = 150;
+
   text("Previous frame:", 50, 300);
 
-  fill(colorOf("brown"));
-  text(extendBits(0, 1), x, 300);
-  x += (7 + 2);
+  x = printBits("0", x, y, "brown");
 
-  fill(colorOf("green"));
-  text(extendBits(previousFrame.id, 11), x, 300);
-  x += (8*11 );
+  x = printBits(extendBits(previousFrame.id, 11), x, y, "green");
 
-  fill(colorOf("blue"));
-  text(extendBits(previousFrame.rtr, 1), x, 300);
-  x += (7 + 2);
+  x = printBits(extendBits(previousFrame.rtr, 1), x, y, "blue");
 
-  fill(colorOf("gray"));
-  text(extendBits(previousFrame.ide, 1), x, 300);
-  x += (7 + 1);
-  text(extendBits(previousFrame.reserved, 1), x, 300);
-  x += (7 + 3);
+  x = printBits(extendBits(previousFrame.ide, 1), x, y, "gray");
 
-  fill(colorOf("orange"));
-  text(extendBits(previousFrame.dlc, 4), x, 300);
-  x += (4*9 - 1);
+  x = printBits(extendBits(previousFrame.reserved, 1), x, y, "gray");
+  
+  x = printBits(extendBits(previousFrame.dlc, 4), x, y, "orange");
 
-  fill(colorOf("magenta"));
-  text(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, 300);
-  x += (previousFrame.dlc*8*8 + 1);
+  x = printBits(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, y, "magenta");
 
-  fill(colorOf("yellow"));
-  text(extendBits(previousFrame.crc, 15), x, 300);
-  x += (4*9 - 1);
+  x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");
 
-  // todo the rest
+  fill("black");  
+}
 
-  fill("black");
+function printBits(bits, x, y, color = "black") {
+  fill(colorOf(color));
+  for (let i = 0; i < bits.length; i++) {
+    text(bits[i], x, y);
+    x += 9;
+  }
+  return x;
 }
 
 

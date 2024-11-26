@@ -337,7 +337,6 @@ function printBusMessage() {
     text(bus.frameToDisplay[i], x, y);
     x+=20;
   }
-  // print bus state:
   let bState = "";
   switch (bus.state) {
     case ARBITRATION:
@@ -391,8 +390,6 @@ function updateClock() {
   if(millis()-lastSecond > period){
     lastSecond = millis();
     clock ++;
-
-    // console.log("p = " + pause);
   }
   text("clock: "+ clock, 1250, 620);
 }
