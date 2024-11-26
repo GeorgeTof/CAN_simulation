@@ -151,11 +151,11 @@ let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
 let pressedKeys = new Map();
-let previousFrame = null;
-// let previousFrame = Object.create(Frame);
+// letpreviousFrame = null;
+let previousFrame = Object.create(Frame);   // just for DEBUG
 let pause = 0;
 let winnerNode = null;
-let period = 500;
+let period = 400;
 
 
 function setup() {
@@ -287,10 +287,10 @@ function keyPressed(){
     pause = (pause + 1) % 2;
   }
   else if (keyCode === UP_ARROW) {
-    period = max((period - 100), 100);
+    period = max((period - 50), 50);
   } 
   else if (keyCode === DOWN_ARROW) {
-    period = min(period + 100, 600);
+    period = min(period + 50, 600);
   }
   if (pause == 0){
     let n = findNodeByKey(nodes, key);

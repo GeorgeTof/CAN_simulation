@@ -25,7 +25,10 @@ const colors = {
   brown: [153, 76, 0],
   gray: [128, 128, 128],
   lime: [102, 255, 51],
-  teal: [51, 153, 153]
+  teal: [51, 153, 153],
+  desaturatedGreen: [100, 175, 100],
+  desaturatedMagenta: [220, 100, 220],
+  desaturatedOrange: [220, 160, 100]
 }
 
 function colorOf(colorName) {

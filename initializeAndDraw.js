@@ -32,7 +32,7 @@ function printPreviousFrame(previousFrame) {
   if(previousFrame == null){
     return;
   }
-  let mainSize = 14;
+  let mainSize = 14, valSize = 11;
   let x = 160, y = 300;
   textSize(14);
 
@@ -40,6 +40,7 @@ function printPreviousFrame(previousFrame) {
 
   x = printBits("0", x, y, "brown");
 
+  printValue(previousFrame.id, x, y, valSize, mainSize, "desaturatedGreen");
   x = printBits(extendBits(previousFrame.id, 11), x, y, "green");
 
   x = printBits(extendBits(previousFrame.rtr, 1), x, y, "blue");
@@ -48,8 +49,10 @@ function printPreviousFrame(previousFrame) {
 
   x = printBits(extendBits(previousFrame.reserved, 1), x, y, "gray");
   
+  printValue(previousFrame.dlc, x, y, valSize, mainSize, "desaturatedOrange");
   x = printBits(extendBits(previousFrame.dlc, 4), x, y, "orange");
 
+  printValue(previousFrame.dataField, x, y, valSize, mainSize, "desaturatedMagenta");
   x = printBits(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, y, "magenta");
 
   x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");
@@ -63,7 +66,14 @@ function printBits(bits, x, y, color = "black") {
     text(bits[i], x, y);
     x += 9;
   }
-  return x;
+  return x;     // update the coordinate left at after writing
+}
+
+function printValue(val, x, y, size, prevSize, color = "black") {
+  fill(colorOf(color));
+  textSize(size);
+  text(`(${val})`, x+9, y-15);
+  textSize(prevSize);
 }
 
 
