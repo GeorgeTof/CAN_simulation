@@ -155,6 +155,7 @@ let previousFrame = null;
 // let previousFrame = Object.create(Frame);
 let pause = 0;
 let winnerNode = null;
+let period = 500;
 
 
 function setup() {
@@ -285,6 +286,12 @@ function keyPressed(){
   if (key == 'p') {
     pause = (pause + 1) % 2;
   }
+  else if (keyCode === UP_ARROW) {
+    period = max((period - 100), 100);
+  } 
+  else if (keyCode === DOWN_ARROW) {
+    period = min(period + 100, 600);
+  }
   if (pause == 0){
     let n = findNodeByKey(nodes, key);
     if(n != null){
@@ -357,7 +364,6 @@ function findNodeByKey(nodes, key) {
 
 function updateClock() {
   textSize(15);
-  let period = 500;
   if(millis()-lastSecond > period){
     lastSecond = millis();
     clock ++;
