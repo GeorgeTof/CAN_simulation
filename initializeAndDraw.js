@@ -9,7 +9,7 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speed sensor";
-  n.id = 1000;
+  n.id = 401;
   n.x = 80;
   n.y = 150;
   n.periodForTransmission = 10;
@@ -29,6 +29,9 @@ function setupNodes(nodes) {
 }
 
 function printPreviousFrame(previousFrame) {
+  if(previousFrame == null){
+    return;
+  }
   // TODO increase text size
   textSize(14);
   // fill(colorOf("green"));
@@ -36,7 +39,7 @@ function printPreviousFrame(previousFrame) {
   text("Previous frame:", 50, 300);
 
   fill(colorOf("brown"));
-  text(extendBits(1, 1), x, 300);
+  text(extendBits(0, 1), x, 300);
   x += (7 + 2);
 
   fill(colorOf("green"));

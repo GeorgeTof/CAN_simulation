@@ -23,6 +23,7 @@ const Node = {
   generateDataFrame(data) {
     let newFrame = Object.create(Frame);
     newFrame.constructDataFrame(this.id, data);
+    newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
     this.sendFrameRegister = newFrame.bitFrame;
@@ -63,7 +64,7 @@ const Frame = {
   partialFrame: "",
   bitFrame: "",
   computePartialFrame() {
-    let pf = "1";
+    let pf = "0";
     pf += extendBits(this.id, 11);
     // console.log("adding ", extendBits(this.id, 11));
     // console.log("current: ", pf);
@@ -89,7 +90,7 @@ const Frame = {
   constructDataFrame(newId, newData) {
     this.id = newId;
     newData = Math.floor(newData);      // maybe redundant
-    this.dlc = Math.floor(newData/8+1);
+    this.dlc = Math.floor(newData/256+1);
     this.dataField = newData;
   },
   constructRemoteFrame(newId, dataLength) {
@@ -150,7 +151,8 @@ let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
 let pressedKeys = new Map();
-let previousFrame = Object.create(Frame);
+let previousFrame = null;
+// let previousFrame = Object.create(Frame);
 let pause = 0;
 let winnerNode = null;
 
@@ -240,6 +242,7 @@ function updateData() {
       previousFrame = winnerNode.sendFrameInMemory;
       winnerNode.endTransmission();
     }
+    // bus.clearFrameToDisplay();       // 
   }
 }
 
@@ -264,7 +267,7 @@ function draw() {
   if(clock > lastClock){
     lastClock = clock;
     updateData();
-    checkTransmittingNodes();
+    checkTransmittingNodes();    // DEBUG isolate the interactive nodes for better trace
   }
 
   printNodes(nodes);
@@ -360,11 +363,6 @@ function updateClock() {
     clock ++;
 
     // console.log("p = " + pause);
-    // console.log( previousFrame.id );
-    // console.log( extendBits(previousFrame.id, 11) );
-    // console.log(ids['acceleration']);
-    // nodes[0].printDetails();
-    // console.log( nodes[1].getDetails() );
   }
   text("clock: "+ clock, 1250, 620);
 }
