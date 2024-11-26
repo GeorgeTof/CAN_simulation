@@ -76,7 +76,6 @@ function printValue(val, x, y, size, prevSize, color = "black") {
   textSize(prevSize);
 }
 
-
 function printNodes(nodes) {
   const size = 12;
   for (let i=0; i<nodes.length; i++){
@@ -88,4 +87,21 @@ function printNodes(nodes) {
     if (n.key != 'nan')
       text('( '+n.key+' )', n.x + n.name.length/2 - 1, n.y+24);
   }
+}
+
+function printCarParameters() {
+  textSize(15);
+  let x = 1100, y = 50, xVal = 1250;
+
+  text("Simulation parameters:", x, y);
+  y+=20;
+  textSize(14);
+  text("car speed:", x, y);
+  text(car.speed, xVal, y);
+  y+=15;
+  text("motor load:", x, y);
+  text(car.motorLoad, xVal, y);
+  y+=15;
+  text("engine temperature:", x, y);
+  text(car.temperature, xVal, y);
 }

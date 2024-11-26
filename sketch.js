@@ -258,6 +258,10 @@ function checkTransmittingNodes() {
   }
 }
 
+function updateSimulation() {
+  
+}
+
 function draw() {
   if(pause == 1) {
     return;
@@ -268,6 +272,7 @@ function draw() {
   if(clock > lastClock){
     lastClock = clock;
     updateData();
+    updateSimulation();
     checkTransmittingNodes();    // DEBUG isolate the interactive nodes for better trace
   }
 
@@ -278,6 +283,8 @@ function draw() {
   printBusMessage();
 
   printNodesToTransmit();
+
+  printCarParameters();
 
   updateClock();
 }
@@ -391,7 +398,7 @@ function updateClock() {
     lastSecond = millis();
     clock ++;
   }
-  text("clock: "+ clock, 1250, 620);
+  text("clock: "+ clock, WIDTH - 150, HEIGHT - 50);
 }
 
 // and size 
