@@ -66,7 +66,7 @@ function printBits(bits, x, y, color = "black") {
     text(bits[i], x, y);
     x += 9;
   }
-  return x;     // update the coordinate left at after writing
+  return x;     // transmit the coordinate left at after writing
 }
 
 function printValue(val, x, y, size, prevSize, color = "black") {
@@ -106,6 +106,6 @@ function printCarParameters() {
   text(car.temperature, xVal, y);
   y+=15;
   text("simulation speed:", x, y);
-  text((1/period*100).toFixed(1), xVal, y);            
+  text((1/period*100).toFixed(2), xVal, y);            
 
 }
