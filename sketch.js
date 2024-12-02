@@ -327,10 +327,18 @@ function keyPressed() {
     pause = (pause + 1) % 2;
   }
   else if (keyCode === UP_ARROW) {
-    period = max((period - 50), 50);
+    if(period == 50){
+      period = 25;
+    }
+    else if(period > 25)
+      period = max((period - 50), 50);
   } 
   else if (keyCode === DOWN_ARROW) {
-    period = min(period + 50, 600);
+    if(period == 25){
+      period = 50;
+    }
+    else
+      period = min(period + 50, 600);
   }
   if (pause == 0){
     let n = findNodeByKey(nodes, key);

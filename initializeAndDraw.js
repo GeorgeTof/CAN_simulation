@@ -107,5 +107,6 @@ function printCarParameters() {
   y+=15;
   text("simulation speed:", x, y);
   text((1/period*100).toFixed(2), xVal, y);            
+  // text(period, xVal, y);            
 
 }
