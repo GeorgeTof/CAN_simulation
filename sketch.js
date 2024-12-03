@@ -519,11 +519,12 @@ function printNodesToTransmit() {
   y = 440;
   for (let tn of nodesToTransmit) {
     let label = ">>" + tn.name + ": ";
-    label += tn.sendFrameRegister.slice(0, tn.sendFramePointer);
+    let label2 = tn.sendFrameRegister.slice(0, tn.sendFramePointer);
     if(tn.state == WAITING){
-      label += " -- Waiting";
+      label2 += " -- Waiting";  
     }
     text(label, 200, y);
+    text(label2, 320, y);
     y+=20;
   }
 }
