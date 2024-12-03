@@ -372,7 +372,7 @@ function updateSimulation() {
     car.temperature += 1;
   }
   else{
-    car.speed = max(car.speed - 1, 0);    // TODO!! try change to 0.5 or smaller value
+    car.speed = max(car.speed - 0.4, 0); 
     car.temperature -=1;
     if(car.started == true)
       car.temperature = max (car.temperature, 30);
@@ -380,7 +380,7 @@ function updateSimulation() {
       car.temperature = max (car.temperature, 20);
   }
   if(car.brakesLoad > 0){
-    car.speed = max(car.speed - 3, 0);
+    car.speed = max(car.speed - 3.5, 0);
     car.brakesLoad = max(car.brakesLoad - 2, 0); 
   }
 }

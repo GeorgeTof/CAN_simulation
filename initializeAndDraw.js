@@ -32,7 +32,7 @@ function setupNodes(nodes) {
   n.id = 401;
   n.x = 370;
   n.y = 220;
-  n.periodForTransmission = 10;
+  n.periodForTransmission = 50;   // period of a data frame of dlc = 1
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor";
@@ -140,7 +140,7 @@ function printCarParameters() {
   text(car.started==1? "yes" : "no", xVal, y);
   y+=15;
   text("car speed:", x, y);
-  text(car.speed, xVal, y);
+  text(Math.floor(car.speed), xVal, y);
   analogDraw(car.speed, xLine, y, 6, "blue");
   y+=15;
   text("motor load:", x, y);
