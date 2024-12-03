@@ -48,6 +48,14 @@ function setupNodes(nodes) {
   n.x = 450;
   n.y = 60;
   nodes.push(n);
+  n = Object.create(Node);
+  n.name = "Brakes";
+  n.id = 1000;
+  n.x = 620;
+  n.y = 220;
+  n.sensitivity = [3];
+  n.functionAtReceive = brakesFuncion;
+  nodes.push(n);
 }
 
 function printPreviousFrame(previousFrame) {
@@ -79,6 +87,12 @@ function printPreviousFrame(previousFrame) {
     x = printBits(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, y, "magenta");
 
     x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");  
+
+    x = printBits(extendBits(previousFrame.crcD, 1), x, y, "gray");  
+
+    x = printBits(extendBits(previousFrame.ack, 1), x, y, "green");  
+
+    x = printBits(extendBits(previousFrame.ackD, 1), x, y, "gray");  
   }
 
   x = printBits(extendBits(previousFrame.eof, 7), x, y, "gray");    
@@ -132,6 +146,12 @@ function printCarParameters() {
   text("motor load:", x, y);
   text(car.motorLoad, xVal, y);
   analogDraw(car.motorLoad, xLine, y, 6, "green");
+  y+=15;
+  text("brakes load:", x, y);
+  if(car.brakesLoad > 0){
+    analogDraw(car.brakesLoad, xLine, y, 5, "brown");
+  }
+  text(car.brakesLoad, xVal, y);
   y+=15;
   text("engine temperature:", x, y);
   text(car.temperature, xVal, y);

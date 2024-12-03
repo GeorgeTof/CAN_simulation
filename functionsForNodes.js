@@ -27,3 +27,11 @@ function startButtonFunction(thisNode, recFrame) {
         }
     }
 }
+
+function brakesFuncion(thisNode, recFrame) {
+    console.log("increasing the brake load by " + recFrame.dataField);
+    if(recFrame.id == 3){   // brakes
+        console.log("really increasing the brake load by " + recFrame.dataField);
+        car.brakesLoad += recFrame.dataField;
+    }
+}
