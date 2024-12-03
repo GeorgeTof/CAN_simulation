@@ -3,7 +3,14 @@ function funForNode(thisNode, recFrame) {                                   // D
 }
 
 function motorFunction(thisNode, recFrame) {
-    car.motorLoad += recFrame.dataField;
+    if(recFrame.id == 5){   // acceleration
+        car.motorLoad += recFrame.dataField;
+    }
+    else if(recFrame.id == 4){  // start button
+        if(recFrame.rtr == 0){  // is a data frame
+            car.started = recFrame.dataField;
+        }
+    }
 }
 
 function accelerationFunction(thisNode, recFrame) {
@@ -14,4 +21,9 @@ function accelerationFunction(thisNode, recFrame) {
 
 function startButtonFunction(thisNode, recFrame) {
     // LAST CHECKPOINT 
+    if(recFrame.id == 5){
+        if(recFrame.dataField == 0){
+            thisNode.generateDataFrame(1);
+        }
+    }
 }

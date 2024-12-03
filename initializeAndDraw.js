@@ -7,9 +7,8 @@ function setupNodes(nodes) {
   n.x = 200;
   n.y = 50;
   n.sensitivity = [4];
-  // todo perform specific funtion
-  nodes.push(n);
   n.functionAtReceive = accelerationFunction;
+  nodes.push(n);
   n = Object.create(Node); 
   n.name = "Brake";
   n.id = 3;
@@ -25,6 +24,8 @@ function setupNodes(nodes) {
   n.defaultData = -2;
   n.x = 300;
   n.y = 50;
+  n.sensitivity = [5];
+  n.functionAtReceive = startButtonFunction;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speed sensor";
@@ -38,7 +39,7 @@ function setupNodes(nodes) {
   n.id = 2000;
   n.x = 300;
   n.y = 200;
-  n.sensitivity = [5];
+  n.sensitivity = [5, 4];
   n.functionAtReceive = motorFunction;
   nodes.push(n);
   n = Object.create(Node);
@@ -121,6 +122,9 @@ function printCarParameters() {
   text("Simulation parameters:", x, y);
   y+=20;
   textSize(14);
+  text("car started:", x, y);
+  text(car.started==1? "yes" : "no", xVal, y);
+  y+=15;
   text("car speed:", x, y);
   text(car.speed, xVal, y);
   y+=15;
