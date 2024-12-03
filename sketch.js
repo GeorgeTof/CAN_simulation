@@ -230,7 +230,11 @@ let previousFrame = Object.create(Frame);   // just for DEBUG
 let pause = 0;
 let winnerNode = null;
 let period = 400;
+let canBusImg;
 
+function preload() {
+  canBusImg = loadImage('resource/can_bus.png');
+}
 
 function setup() {
   createCanvas(WIDTH, HEIGHT);
@@ -383,6 +387,7 @@ function draw() {
   }
 
   background(220, 220, 220);
+  image(canBusImg, 0, 0);
 
   if(clock > lastClock){
     lastClock = clock;

@@ -5,7 +5,7 @@ function setupNodes(nodes) {
   n.key = 'w';
   n.defaultData = -1;
   n.x = 200;
-  n.y = 50;
+  n.y = 60;
   n.sensitivity = [4];
   n.functionAtReceive = accelerationFunction;
   nodes.push(n);
@@ -14,39 +14,39 @@ function setupNodes(nodes) {
   n.id = 3;
   n.key = 's';
   n.defaultData = -1;
-  n.x = 100;
-  n.y = 50;
+  n.x = 140;
+  n.y = 60;
   nodes.push(n);
   n = Object.create(Node); 
   n.name = "Start Button";
   n.id = 4;
   n.key = 'k';
   n.defaultData = -2;
-  n.x = 300;
-  n.y = 50;
+  n.x = 290;
+  n.y = 60;
   n.sensitivity = [5];
   n.functionAtReceive = startButtonFunction;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speed sensor";
   n.id = 401;
-  n.x = 400;
-  n.y = 200;
+  n.x = 370;
+  n.y = 220;
   n.periodForTransmission = 10;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor";
   n.id = 2000;
   n.x = 300;
-  n.y = 200;
+  n.y = 220;
   n.sensitivity = [5, 4];
   n.functionAtReceive = motorFunction;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speedometer";
   n.id = 1900;
-  n.x = 500;
-  n.y = 50;
+  n.x = 450;
+  n.y = 60;
   nodes.push(n);
 }
 
@@ -117,7 +117,7 @@ function printNodes(nodes) {
 
 function printCarParameters() {
   textSize(15);
-  let x = 1100, y = 50, xVal = 1250;
+  let x = 1000, y = 50, xVal = 1150, xLine = 1200;
 
   text("Simulation parameters:", x, y);
   y+=20;
@@ -127,15 +127,26 @@ function printCarParameters() {
   y+=15;
   text("car speed:", x, y);
   text(car.speed, xVal, y);
+  analogDraw(car.speed, xLine, y, 6, "blue");
   y+=15;
   text("motor load:", x, y);
   text(car.motorLoad, xVal, y);
+  analogDraw(car.motorLoad, xLine, y, 6, "green");
   y+=15;
   text("engine temperature:", x, y);
   text(car.temperature, xVal, y);
+  analogDraw(car.temperature , xLine, y, 6, "orange");
   y+=15;
   text("simulation speed:", x, y);
   text((1/period*100).toFixed(2), xVal, y);            
   // text(period, xVal, y);            
 
+}
+
+function analogDraw(val, x, y, weight, color) {
+  strokeWeight(weight);
+  stroke(colorOf(color));
+  line(x, y-6, x + val, y-6);
+  // stroke("black");
+  strokeWeight(0.01);
 }
