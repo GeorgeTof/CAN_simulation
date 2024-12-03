@@ -14,6 +14,8 @@ const Node = {
   fieldForTransmission: 'speed',
   x: 10,
   y: 10,
+  sensitivity: [],
+  functionAtReceive: funForNode,
   printDetails() {
     console.log(this.name + " " + this.id + " " + this.key + " " + this.state + " ");
   },
@@ -44,8 +46,25 @@ const Node = {
     this.sendFrameRegister = "";
     this.sendFramePointer = 0;
     nodesToTransmit.delete(this);
+  },
+  decodeFrame() {
+    newFrame = Object.create(Frame);
+    bitstring = this.destuffFrame(this.receivedFrameRegister);
+    newFrame.id = parseInt( bitstring.substring(1, 12), 2 );
+    newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
+    newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
+    newFrame.reserved = parseInt( bitstring.substring(14, 15), 2 );
+    newFrame.dlc = parseInt( bitstring.substring(15, 19), 2 );
+    if(newFrame.rtr == 0){
+      newFrame.dataField = parseInt( bitstring.substring(19, 19+8*newFrame.dlc), 2 );
+      newFrame.crc = parseInt( bitstring.substring(19+8*newFrame.dlc, 19+8*newFrame.dlc + 15), 2 );
+    }
+    return newFrame;
+  },
+  destuffFrame(bitstring) {
+    // TODO! destuffing
+    return bitstring;
   }
-
 }
 
 const Frame = {
@@ -160,7 +179,13 @@ const bus = {
       bus.polarity = busValue;
       bus.bitsOfSamePolarity = 1;
     }
-  }
+  },
+  // for acknowledgement
+  ack: 0
+}
+
+function funForNode() {                                   // DEBUG function
+  console.log("Node has recieved an important frame");
 }
 
 
@@ -182,6 +207,20 @@ function setup() {
   setupNodes(nodes);
 }
 
+function receiveFrame() {
+  console.log(bus.currentFrame);
+  nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation
+  receivedFrame = nodes[0].decodeFrame();
+  console.log("Nodes have received the frame:");
+  // console.log(receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1
+  for(let n of nodes) {
+    if(n.sensitivity.includes(receivedFrame.id)) {
+      n.functionAtReceive();
+    }
+  }
+
+}
+
 function updateData() {
   // write debug here
   //
@@ -194,11 +233,12 @@ function updateData() {
       bus.currentFrame = "";
       bus.nextFramePart();
       bus.frameToDisplay = "0";
-      console.log("Start arbitration stage");
+      // console.log("Start arbitration stage");
       bus.polarity = 0;
       bus.bitsOfSamePolarity = 1;
       bus.error = 0;
-      bus.stuffBits = new Map();  // TODO: move to end of frame to avoid perpetual assignment in idle
+      bus.stuffBits = new Map();
+      bus.ack = 0;  // TODO: move to end of frame to avoid perpetual assignment in idle
     }
     return;
   }
@@ -249,13 +289,18 @@ function updateData() {
   else if(bus.state == CRC) {
     bus.clearFrameToDisplay();
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
-    winnerNode.incrementSendFramePointer();                           // TODO! implement logic for ack bit
+    winnerNode.incrementSendFramePointer();                           
     if(bus.frameToDisplay.length == 18){
       bus.nextFramePart();
+      bus.ack = 1;                        // TODO! implement logic for ack bit
     }
   }
   else if(bus.state == EOF) {
     bus.clearFrameToDisplay();
+    if(bus.ack == 1){
+      bus.ack = 0;
+      receiveFrame();
+    }
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();                           // TODO! implement logic for storing the frame in interested nodes and in previous frame
     if(bus.frameToDisplay.length == 7){
@@ -369,7 +414,7 @@ function keyReleased() {
       let timePassed = millis() - satrtTime;
       pressedKeys.delete(key);
       console.log("key "+key+" pressed for "+Math.floor(timePassed/60)+" time units (" + (timePassed/1000) + " seconds)");
-      n.dataRegister += Math.floor(timePassed/60);      // TODO clear data after successful transmission
+      n.dataRegister += Math.floor(timePassed/60);      
       console.log("node "+n.name+" sending data frame containing the data "+n.dataRegister);   
       n.generateDataFrame(n.dataRegister);
     }

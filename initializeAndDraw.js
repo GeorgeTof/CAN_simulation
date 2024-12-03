@@ -19,6 +19,7 @@ function setupNodes(nodes) {
   n.id = 2000;
   n.x = 180;
   n.y = 150;
+  n.sensitivity = [5];
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speedometer";
