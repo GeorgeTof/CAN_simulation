@@ -73,10 +73,14 @@ function printPreviousFrame(previousFrame) {
   printValue(previousFrame.dlc, x, y, valSize, mainSize, "desaturatedOrange");
   x = printBits(extendBits(previousFrame.dlc, 4), x, y, "orange");
 
-  printValue(previousFrame.dataField, x, y, valSize, mainSize, "desaturatedMagenta");
-  x = printBits(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, y, "magenta");
+  if(previousFrame.rtr == 0){
+    printValue(previousFrame.dataField, x, y, valSize, mainSize, "desaturatedMagenta");
+    x = printBits(extendBits(previousFrame.dataField, previousFrame.dlc*8), x, y, "magenta");
 
-  x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");
+    x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");  
+  }
+
+  x = printBits(extendBits(previousFrame.eof, 7), x, y, "gray");    
 
   fill("black");  
 }

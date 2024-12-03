@@ -11,3 +11,7 @@ function accelerationFunction(thisNode, recFrame) {
         thisNode.generateDataFrame(thisNode.dataRegister);
     }
 }
+
+function startButtonFunction(thisNode, recFrame) {
+    // LAST CHECKPOINT 
+}
