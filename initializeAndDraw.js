@@ -7,6 +7,7 @@ function setupNodes(nodes) {
   n.x = 50;
   n.y = 50;
   nodes.push(n);
+  n.functionAtReceive = accelerationFunction;
   n = Object.create(Node);
   n.name = "Speed sensor";
   n.id = 401;
@@ -20,6 +21,7 @@ function setupNodes(nodes) {
   n.x = 180;
   n.y = 150;
   n.sensitivity = [5];
+  n.functionAtReceive = motorFunction;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Speedometer";

@@ -142,7 +142,8 @@ const car = {
   speed: 0,
   motorLoad: 0,
   temperature: 20,
-  started: false
+  started: false,
+  errors: 0
 }
 
 const bus = {
@@ -184,11 +185,6 @@ const bus = {
   ack: 0
 }
 
-function funForNode() {                                   // DEBUG function
-  console.log("Node has recieved an important frame");
-}
-
-
 let clock = 1;
 let lastClock = 1;
 let lastSecond = 0;
@@ -208,14 +204,14 @@ function setup() {
 }
 
 function receiveFrame() {
-  console.log(bus.currentFrame);
+  // console.log(bus.currentFrame);
   nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation
   receivedFrame = nodes[0].decodeFrame();
-  console.log("Nodes have received the frame:");
-  // console.log(receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1
+  // console.log("Nodes have received the frame:"+receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1
   for(let n of nodes) {
     if(n.sensitivity.includes(receivedFrame.id)) {
-      n.functionAtReceive();
+      funForNode(n, receivedFrame);
+      n.functionAtReceive(n, receivedFrame);
     }
   }
 
@@ -324,6 +320,7 @@ function checkTransmittingNodes() {
 }
 
 function updateSimulation() {
+  // TODO! increase the car speed and temp only when the car is started
   if(car.motorLoad > 0){
     car.speed += 2;
     car.motorLoad -= 5;
