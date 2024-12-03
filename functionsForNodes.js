@@ -8,6 +8,6 @@ function motorFunction(thisNode, recFrame) {
 
 function accelerationFunction(thisNode, recFrame) {
     if(recFrame.rtr == 1){
-        n.generateDataFrame(n.dataRegister);
+        thisNode.generateDataFrame(thisNode.dataRegister);
     }
 }

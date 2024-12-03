@@ -8,7 +8,7 @@ const Node = {
   receivedFrameRegister: 0,
   idSensitivityList: null,
   key: "nan",
-  defaultData: 1,       // -1 for dynamic ones
+  defaultData: 1,       // -1 for dynamic ones  // -2 for remote frames
   dataRegister: 0,
   periodForTransmission: 0,
   fieldForTransmission: 'speed',
@@ -28,6 +28,16 @@ const Node = {
     newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
+    this.sendFrameRegister = newFrame.bitFrame;
+    this.sendFramePointer = 0;
+    nodesToTransmit.add(this);
+    this.state = WAITING;
+  },
+  generateRemoteFrame() {
+    let newFrame = Object.create(Frame);
+    newFrame.constructRemoteFrame(this.id, 1);
+    this.sendFrameInMemory = newFrame;
+    newFrame.computeFrame();    // LAST CHECKPOINT TODO!! compute frame for remote frame
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -91,17 +101,21 @@ const Frame = {
     pf += extendBits(this.ide, 1);
     pf += extendBits(this.reserved, 1);
     pf += extendBits(this.dlc, 4);
-    pf += extendBits(this.dataField, (this.dlc * 8));
+    if(this.rtr == 0){
+      pf += extendBits(this.dataField, (this.dlc * 8));
+    }
     this.partialFrame = pf;
   },
   computeFrame() {
     this.computePartialFrame();   // COMPLETE FUNCTIONALITY NOT TESTED
     // console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
     let f = this.partialFrame;
-    f += calculateCRC_dummy(this.partialFrame);
-    f += extendBits(this.crcD, 1);
-    f += extendBits(this.ack, 1);
-    f += extendBits(this.ackD, 1);
+    if(this.rtr == 0){
+      f += calculateCRC_dummy(this.partialFrame);
+      f += extendBits(this.crcD, 1);
+      f += extendBits(this.ack, 1);
+      f += extendBits(this.ackD, 1);
+    }
     f += extendBits(this.eof, 7);
     f += extendBits(this.ifs, 3);
     this.bitFrame = f;
@@ -113,10 +127,14 @@ const Frame = {
     this.dataField = newData;
   },
   constructRemoteFrame(newId, dataLength) {
+    this.rtr = 1;
     this.id = newId;
     this.dlc = dataLength;
   },
   displayData() {
+    if (this.rtr == 1){
+      return this.displayRemoteFrame();
+    }
     return `
 ID: ${this.id}
 RTR: ${this.rtr}
@@ -131,7 +149,18 @@ ACK Delimiter: ${this.ackD}
 EOF: ${this.eof}
 IFS: ${this.ifs}
 Bit Frame: ${this.bitFrame}`;
-  }
+  },
+  displayRemoteFrame() {
+    return `
+ID: ${this.id}
+RTR: ${this.rtr}
+IDE: ${this.ide}
+Reserved: ${this.reserved}
+DLC: ${this.dlc}
+EOF: ${this.eof}
+IFS: ${this.ifs}
+Bit Frame: ${this.bitFrame}`;
+}
 }
 
 /*
@@ -152,8 +181,13 @@ const bus = {
   frameToDisplay: "",
   consecutiveBitsOfSameParity: 0,
   changedState: false,
-  nextFramePart(){
-    this.state = (this.state+1) % 6; 
+  nextFramePart(rtrFrame = false){
+    if(rtrFrame == true){
+      this.state = EOF;
+    }
+    else{
+      this.state = (this.state+1) % 6; 
+    }
     this.changedState = true;
   },
   clearFrameToDisplay(){
@@ -271,7 +305,13 @@ function updateData() {
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();
     if(bus.frameToDisplay.length == 7){
-      bus.nextFramePart();
+      if(winnerNode.sendFrameInMemory.rtr == 1){
+        bus.ack = 1;
+        bus.nextFramePart(true);
+      }
+      else{
+        bus.nextFramePart();
+      }
     }
   }
   else if(bus.state == DATA) {
@@ -385,12 +425,14 @@ function keyPressed() {
   if (pause == 0){
     let n = findNodeByKey(nodes, key);
     if(n != null){
-      if(n.defaultData != -1){
-        // TODO ADD SPECFIC FUNCTIONALITY FOR NODES REQUESTING DATA
-        n.generateDataFrame(n.defaultData);
+      if(n.defaultData == -1){
+        pressedKeys.set(key, millis());
+      }
+      else if(n.defaultData == -2){
+        n.generateRemoteFrame();
       }
       else{
-        pressedKeys.set(key, millis());
+        n.generateDataFrame(n.defaultData);
       }
     }
   }
