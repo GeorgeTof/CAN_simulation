@@ -135,8 +135,6 @@ function printNodes(nodes) {
       fill(colorOf("black"));
       if(n.dataRegister2 == 1){
         image(checkEngineImg, n.x+70, n.y+5, 30, 30);
-        // console.log("should print the check engine");
-        // image(checkEngineImg, 0, 0);
       }
     }
   }
@@ -174,6 +172,31 @@ function printCarParameters() {
   text((1/period*100).toFixed(2), xVal, y);            
   // text(period, xVal, y);            
 
+}
+
+function printInstructions() {
+  textSize(15);
+  let x = 1000, y = 270, xText = 1070;
+
+  text("Commands:", x, y);
+  y+=25;
+  
+  y = printCommand("Pause the simulation", x, y, xText, pKeyImg);
+
+  image(downKeyImg, x+25, y-15, 25, 25);
+  y = printCommand("Increase / decrease simulation speed", x, y, xText, upKeyImg);
+
+  y = printCommand("Press the acceleration pedal", x, y, xText, wKeyImg);
+  y = printCommand("Press the break pedal", x, y, xText, sKeyImg);
+  y = printCommand("Press the start button", x, y, xText, kKeyImg);
+
+}
+
+function printCommand(txt, x, y, xText, img) {
+  textSize(14);
+  image(img, x, y-15, 25, 25);
+  text(txt, xText, y);
+  return y+25;
 }
 
 function analogDraw(val, x, y, weight, color) {

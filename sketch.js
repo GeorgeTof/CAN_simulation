@@ -228,7 +228,7 @@ let nodes = [];
 const nodesToTransmit = new Set();
 let pressedKeys = new Map();
 // letpreviousFrame = null;
-let previousFrame = Object.create(Frame);   // just for DEBUG
+let previousFrame = null;   
 let pause = 0;
 let winnerNode = null;
 let period = 400;
@@ -236,6 +236,12 @@ let period = 400;
 function preload() {
   canBusImg = loadImage('resource/can_bus.png');
   checkEngineImg = loadImage('resource/check_engine.png');
+  upKeyImg = loadImage('resource/up-arrow.png');
+  downKeyImg = loadImage('resource/down-arrow.png');
+  wKeyImg = loadImage('resource/w-key.png');
+  sKeyImg = loadImage('resource/s-key.png');
+  kKeyImg = loadImage('resource/k-key.png');
+  pKeyImg = loadImage('resource/p-key.png');
 }
 
 function setup() {
@@ -415,6 +421,8 @@ function draw() {
   printNodesToTransmit();
 
   printCarParameters();
+
+  printInstructions();
 
   updateClock();
 }
