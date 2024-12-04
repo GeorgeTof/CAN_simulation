@@ -39,7 +39,6 @@ function brakesFuncion(thisNode, recFrame) {
 function generateMotorSensorsData() {
     /// the first byte will be the car temperature and the second one will be the speed
     let data = 0;
-    // console.log("Generating frame with speed and twmperature being:", car.speed, car.temperature);
     data += Math.floor(car.speed);
     data += Math.floor(car.temperature) * 256;
     return data;
@@ -51,6 +50,5 @@ function dashboardFunction(thisNode, recFrame) {
         if(Math.floor(recFrame.dataField / 256) > 45){     // if temperature greater tha treshold
             thisNode.dataRegister2 = 1;                 // set the check engine register indefinietly
         } 
-        console.log("dashboard updated to", thisNode.dataRegister, thisNode.dataRegister2);
     }
 }

@@ -234,7 +234,7 @@ let winnerNode = null;
 let period = 400;
 
 function preload() {
-  canBusImg = loadImage('resource/can_bus.png');
+  canBusImg = loadImage('resource/can_bus_2.png');
   checkEngineImg = loadImage('resource/check_engine.png');
   upKeyImg = loadImage('resource/up-arrow.png');
   downKeyImg = loadImage('resource/down-arrow.png');
