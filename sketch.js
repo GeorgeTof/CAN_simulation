@@ -10,6 +10,7 @@ const Node = {
   key: "nan",
   defaultData: 1,       // -1 for dynamic ones  // -2 for remote frames
   dataRegister: 0,
+  dataRegister2: 0,     // needed for the dashboard
   periodForTransmission: 0,
   fieldForTransmission: 'speed',
   x: 10,
@@ -123,7 +124,7 @@ const Frame = {
   constructDataFrame(newId, newData) {
     this.id = newId;
     newData = Math.floor(newData);      // maybe redundant
-    this.dlc = Math.floor(newData/256+1);
+    this.dlc = calculateBytes(newData);
     this.dataField = newData;
   },
   constructRemoteFrame(newId, dataLength) {
@@ -358,7 +359,12 @@ function checkTransmittingNodes() {
     let n=nodes[i];
     if(n.periodForTransmission != 0){
       if(clock % n.periodForTransmission == 0 && n.state != TRANSMITTING){
-        n.generateDataFrame(car[n.fieldForTransmission]);
+        if(n.name == "Motor sensors"){
+          n.generateDataFrame(generateMotorSensorsData());
+        }
+        else{
+          n.generateDataFrame(car[n.fieldForTransmission]);
+        }
       }
     }
   }
@@ -372,12 +378,12 @@ function updateSimulation() {
     car.temperature += 1;
   }
   else{
-    car.speed = max(car.speed - 0.4, 0); 
+    car.speed = max(car.speed - 0.3, 0); 
     car.temperature -=1;
     if(car.started == true)
       car.temperature = max (car.temperature, 30);
     else
-      car.temperature = max (car.temperature, 20);
+      car.temperature = max (car.temperature, 15);
   }
   if(car.brakesLoad > 0){
     car.speed = max(car.speed - 3.5, 0);
@@ -580,6 +586,15 @@ function calculateCRC(data, poly = 0x4599, crcLen = 15) {
     return dataInt.toString(2).padStart(crcLen, '0');
 }
 
+function calculateBytes(n) {
+    if (n === 0) {
+        return 1; 
+    }
+    
+    const bits = Math.floor(Math.log2(n)) + 1;
+
+    return Math.ceil(bits / 8);
+}
 
 
 

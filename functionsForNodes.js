@@ -35,3 +35,23 @@ function brakesFuncion(thisNode, recFrame) {
         car.brakesLoad += recFrame.dataField;
     }
 }
+
+function generateMotorSensorsData() {
+    /// the first byte will be the car temperature and the second one will be the speed
+    let data = 0;
+    console.log("Generating frame with speed and twmperature being:", car.speed, car.temperature);
+    data += Math.floor(car.speed);
+    data += car.temperature * 256;
+    return data;
+}
+
+function dashboardFunction(thisNode, recFrame) {
+    if(recFrame.id == 401){     //motor sensors
+        console.log("data recieved is", recFrame.dataField);
+        thisNode.dataRegister = recFrame.dataField % 256;
+        if(Math.floor(recFrame.dataField / 256) > 45){     // if temperature greater tha treshold
+            thisNode.dataRegister2 = 1;                 // set the check engine register indefinietly
+        } 
+        console.log("dashboard updated to", thisNode.dataRegister, thisNode.dataRegister2);
+    }
+}

@@ -28,11 +28,11 @@ function setupNodes(nodes) {
   n.functionAtReceive = startButtonFunction;
   nodes.push(n);
   n = Object.create(Node);
-  n.name = "Speed sensor";
+  n.name = "Motor sensors";
   n.id = 401;
   n.x = 370;
   n.y = 220;
-  n.periodForTransmission = 50;   // period of a data frame of dlc = 1
+  n.periodForTransmission = 25;   // shorter than period of a data frame of dlc = 1
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor";
@@ -43,10 +43,12 @@ function setupNodes(nodes) {
   n.functionAtReceive = motorFunction;
   nodes.push(n);
   n = Object.create(Node);
-  n.name = "Speedometer";
+  n.name = "Dashboard";
   n.id = 1900;
   n.x = 450;
   n.y = 60;
+  n.sensitivity = [401];
+  n.functionAtReceive = dashboardFunction;
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Brakes";
