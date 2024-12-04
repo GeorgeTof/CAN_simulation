@@ -379,9 +379,11 @@ function checkTransmittingNodes() {
 function updateSimulation() {
   // TODO! increase the car speed and temp only when the car is started
   if(car.motorLoad > 0){
-    car.speed += 2;
+    if(car.started == true){
+      car.speed += 2;
+      car.temperature += 1;
+    }
     car.motorLoad = max(car.motorLoad - 2, 0);
-    car.temperature += 1;
   }
   else{
     car.speed = max(car.speed - 0.3, 0); 
