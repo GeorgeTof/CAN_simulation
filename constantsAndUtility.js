@@ -40,3 +40,4 @@ function colorOf(colorName) {
 let canBusImg;
 let checkEngineImg;
 let upKeyImg, downKeyImg, kKeyImg, wKeyImg, sKeyImg, pKeyImg;
+let keyImgMap = new Map();

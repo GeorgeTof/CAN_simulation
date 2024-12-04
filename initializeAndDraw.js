@@ -126,8 +126,10 @@ function printNodes(nodes) {
     text(n.name, n.x, n.y);
     text("ID: "+n.id, n.x, n.y+12);
     textSize(14);
-    if(n.key != 'nan')
-      text('( '+n.key+' )', n.x + n.name.length/2 - 1, n.y+24);
+    if(n.key != 'nan'){
+      // text('( '+n.key+' )', n.x + n.name.length/2 - 1, n.y+24);
+      image(keyImgMap.get(n.key), n.x + n.name.length/2 , n.y+13, 20, 20)
+    }
     if(n.name == "Dashboard"){
       textSize(16);
       fill(colorOf("blue"));

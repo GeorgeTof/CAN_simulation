@@ -171,7 +171,7 @@ Bit Frame: ${this.bitFrame}`;
 const car = {
   speed: 0,
   motorLoad: 0,
-  temperature: 20,
+  temperature: 15,
   started: false,
   errors: 0,
   brakesLoad: 0
@@ -247,6 +247,10 @@ function preload() {
 function setup() {
   createCanvas(WIDTH, HEIGHT);
   setupNodes(nodes);
+  keyImgMap.set('w', wKeyImg);
+  keyImgMap.set('s', sKeyImg);
+  keyImgMap.set('p', pKeyImg);
+  keyImgMap.set('k', kKeyImg);
 }
 
 function receiveFrame() {
