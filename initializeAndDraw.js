@@ -126,8 +126,19 @@ function printNodes(nodes) {
     text(n.name, n.x, n.y);
     text("ID: "+n.id, n.x, n.y+12);
     textSize(14);
-    if (n.key != 'nan')
+    if(n.key != 'nan')
       text('( '+n.key+' )', n.x + n.name.length/2 - 1, n.y+24);
+    if(n.name == "Dashboard"){
+      textSize(16);
+      fill(colorOf("blue"));
+      text(n.dataRegister+" km/h", n.x+70, n.y);
+      fill(colorOf("black"));
+      if(n.dataRegister2 == 1){
+        image(checkEngineImg, n.x+70, n.y+5, 30, 30);
+        // console.log("should print the check engine");
+        // image(checkEngineImg, 0, 0);
+      }
+    }
   }
 }
 
@@ -156,7 +167,7 @@ function printCarParameters() {
   text(car.brakesLoad, xVal, y);
   y+=15;
   text("engine temperature:", x, y);
-  text(car.temperature, xVal, y);
+  text(Math.floor(car.temperature), xVal, y);
   analogDraw(car.temperature , xLine, y, 6, "orange");
   y+=15;
   text("simulation speed:", x, y);

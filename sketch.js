@@ -232,10 +232,10 @@ let previousFrame = Object.create(Frame);   // just for DEBUG
 let pause = 0;
 let winnerNode = null;
 let period = 400;
-let canBusImg;
 
 function preload() {
   canBusImg = loadImage('resource/can_bus.png');
+  checkEngineImg = loadImage('resource/check_engine.png');
 }
 
 function setup() {
@@ -379,7 +379,7 @@ function updateSimulation() {
   }
   else{
     car.speed = max(car.speed - 0.3, 0); 
-    car.temperature -=1;
+    car.temperature -=0.3;
     if(car.started == true)
       car.temperature = max (car.temperature, 30);
     else

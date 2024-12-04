@@ -36,3 +36,6 @@ function colorOf(colorName) {
   let actualC = color(c[0], c[1], c[2]);
   return actualC;
 }
+
+let canBusImg;
+let checkEngineImg;
