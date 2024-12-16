@@ -1,7 +1,8 @@
-const WIDTH = 1400;
+const WIDTH = 1395;
 const HEIGHT = 660;
 const TRANSMITTING = 1, RECEIVING = 0 /* AKA idle */ , WAITING = 2;
 const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, EOF = 4, IDLE = 5;
+const TIME_TO_SHOW_RECEIVAL = 10;
 
 const ids = {
   acceleration: 5,
@@ -28,7 +29,10 @@ const colors = {
   teal: [51, 153, 153],
   desaturatedGreen: [100, 175, 100],
   desaturatedMagenta: [220, 100, 220],
-  desaturatedOrange: [220, 160, 100]
+  desaturatedOrange: [220, 160, 100],
+  darkCrimson: [120, 0, 25],
+  darkBlue: [0, 0, 139],
+  darkGreen: [0, 139, 0]
 }
 
 function colorOf(colorName) {

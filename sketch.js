@@ -226,6 +226,7 @@ let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
+let nodesThatReceived = new Map();
 let pressedKeys = new Map();
 // letpreviousFrame = null;
 let previousFrame = null;   
@@ -262,6 +263,7 @@ function receiveFrame() {
     if(n.sensitivity.includes(receivedFrame.id)) {
       funForNode(n, receivedFrame);
       n.functionAtReceive(n, receivedFrame);
+      nodesThatReceived.set(n.id, TIME_TO_SHOW_RECEIVAL);
     }
   }
 
@@ -376,6 +378,15 @@ function checkTransmittingNodes() {
           n.generateDataFrame(car[n.fieldForTransmission]);
         }
       }
+    }
+  }
+  // also update the state of nodes that have received for displaying
+  for (let [key, val] of nodesThatReceived.entries()){
+    if (val > 0){
+      nodesThatReceived.set(key, val - 1);
+    }
+    else if (val == 0){
+      nodesThatReceived.delete(key);
     }
   }
 }

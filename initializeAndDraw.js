@@ -123,6 +123,15 @@ function printNodes(nodes) {
   for (let i=0; i<nodes.length; i++){
     textSize(12);
     let n=nodes[i];
+    if(n.state == TRANSMITTING){
+      fill(colorOf("darkBlue"));
+    }
+    else if(n.state == WAITING){
+      fill(colorOf("darkCrimson"));
+    }
+    else if(nodesThatReceived.has(n.id)){
+      fill(colorOf("darkGreen"));
+    }
     text(n.name, n.x, n.y);
     text("ID: "+n.id, n.x, n.y+12);
     textSize(14);
@@ -130,6 +139,7 @@ function printNodes(nodes) {
       // text('( '+n.key+' )', n.x + n.name.length/2 - 1, n.y+24);
       image(keyImgMap.get(n.key), n.x + n.name.length/2 , n.y+13, 20, 20)
     }
+    fill(colorOf("black"));
     if(n.name == "Dashboard"){
       textSize(16);
       fill(colorOf("blue"));
