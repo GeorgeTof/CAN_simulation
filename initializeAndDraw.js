@@ -6,7 +6,7 @@ function setupNodes(nodes) {
   n.defaultData = -1;
   n.x = 200;
   n.y = 60;
-  n.sensitivity = [4];
+  n.sensitivity = [IDS.startButton];
   n.functionAtReceive = accelerationFunction;
   nodes.push(n);
   n = Object.create(Node); 
@@ -24,7 +24,7 @@ function setupNodes(nodes) {
   n.defaultData = -2;
   n.x = 290;
   n.y = 60;
-  n.sensitivity = [5];
+  n.sensitivity = [IDS.acceleration];
   n.functionAtReceive = startButtonFunction;
   nodes.push(n);
   n = Object.create(Node);
@@ -39,7 +39,7 @@ function setupNodes(nodes) {
   n.id = IDS.motor;
   n.x = 300;
   n.y = 220;
-  n.sensitivity = [5, 4];
+  n.sensitivity = [IDS.acceleration, IDS.startButton];
   n.functionAtReceive = motorFunction;
   nodes.push(n);
   n = Object.create(Node);
@@ -47,7 +47,7 @@ function setupNodes(nodes) {
   n.id = IDS.dashboard;
   n.x = 450;
   n.y = 60;
-  n.sensitivity = [401];
+  n.sensitivity = [IDS.motorSensors];
   n.functionAtReceive = dashboardFunction;
   nodes.push(n);
   n = Object.create(Node);
@@ -55,7 +55,7 @@ function setupNodes(nodes) {
   n.id = IDS.brakes;
   n.x = 620;
   n.y = 220;
-  n.sensitivity = [3];
+  n.sensitivity = [IDS.brake];
   n.functionAtReceive = brakesFuncion;
   nodes.push(n);
 }
