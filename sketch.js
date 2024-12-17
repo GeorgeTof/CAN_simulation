@@ -41,7 +41,7 @@ const Node = {
     newFrame.constructRemoteFrame(this.id, 1);
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
-    this.stuffFrame(newFrame.bitFrame, true);         // NOT TESTED YET FOR REMOTE FRAME TODO!!!
+    this.stuffFrame(newFrame.bitFrame, true);
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -64,7 +64,7 @@ const Node = {
   decodeFrame() {
     newFrame = Object.create(Frame);
     bitstring = this.receivedFrameRegister;
-    // bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO change back to destuffing after checking
+    // bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO! change back to destuffing after checking
     newFrame.id = parseInt( bitstring.substring(1, 12), 2 );
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
@@ -91,7 +91,8 @@ const Node = {
         if(samePolarity == 5){
           newBitFrame += (polarity == "0") ? "1" : "0";   // add the stuff bit
           // console.log("add stuff bit at potition", i);    // DEBUG
-          samePolarity = 0;
+          samePolarity = 1;
+          polarity = (polarity == "0") ? "1" : "0";
           stuffed ++;
         }
       }
@@ -137,7 +138,8 @@ const Node = {
         if(samePolarity == 5){
           i ++;                       // skip the stuff bit
           // console.log("found stuff bit at potition", i);    // DEBUG
-          samePolarity = 0;
+          samePolarity = 1;
+          polarity = (polarity == "0") ? "1" : "0";
           stuffed ++;
         }
       }
@@ -286,11 +288,19 @@ const bus = {
   stuffBits: null,
   bitsOfSamePolarity: 0,
   error: 0,
+  nextIsStuff: false,
   checkStuffBits(busValue){
-    if(busValue == bus.polarity){
+    if(bus.nextIsStuff){
+      bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);
+      bus.polarity = 1 - bus.polarity;
+      bus.bitsOfSamePolarity = 1;
+      bus.nextIsStuff = false;
+    }
+    else if(busValue == bus.polarity){
       bus.bitsOfSamePolarity ++;
       if(bus.bitsOfSamePolarity == 5){
-        bus.stuffBits.set(bus.frameToDisplay.length, 1 - bus.polarity);
+        bus.nextIsStuff = true;
+        console.log("found bit that should be stuff after", bus.frameToDisplay);  // DEBUG
       }
     }
     else{
@@ -338,8 +348,8 @@ function setup() {
 function receiveFrame() {
   // console.log(bus.currentFrame);
   nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation  
-  let receivedFrame = nodes[0].decodeFrame();           // TODO! implement decoding of the stuff bits
-  // console.log("Nodes have received the frame:"+receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1
+  let receivedFrame = nodes[0].decodeFrame();           
+  // console.log("Nodes have received the frame:"+receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1 , I think it is but should check
   for(let n of nodes) {
     if(n.sensitivity.includes(receivedFrame.id)) {
       funForNode(n, receivedFrame);
@@ -367,6 +377,7 @@ function updateData() {
       bus.bitsOfSamePolarity = 1;
       bus.error = 0;
       bus.stuffBits = new Map();
+      bus.nextIsStuff = false;
       bus.ack = 0;  // TODO: move to end of frame to avoid perpetual assignment in idle
     }
     return;
@@ -402,6 +413,7 @@ function updateData() {
     bus.clearFrameToDisplay();
     // console.log("The node that won the arbitration is "+winnerNode.name);
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer();
     if(bus.frameToDisplay.length == 7){
       resetWaitingNodes();
@@ -417,6 +429,7 @@ function updateData() {
   else if(bus.state == DATA) {
     bus.clearFrameToDisplay();
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer();
     if(bus.frameToDisplay.length == 8*winnerNode.sendFrameInMemory.dlc){
       bus.nextFramePart();
@@ -425,6 +438,7 @@ function updateData() {
   else if(bus.state == CRC) {
     bus.clearFrameToDisplay();
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer(); 
     if(bus.frameToDisplay.length == 17){      // CRC delimiter
       if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO bus.error == 0

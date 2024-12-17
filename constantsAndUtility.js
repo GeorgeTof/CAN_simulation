@@ -8,7 +8,7 @@ const IDS = {
   acceleration: 5,
   brake: 3,
   startButton: 4,
-  motorSensors: 401,
+  motorSensors: 400,
   motor: 2000,
   dashboard: 1900,
   brakes: 1000
