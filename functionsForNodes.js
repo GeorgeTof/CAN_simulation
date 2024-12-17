@@ -28,9 +28,9 @@ function startButtonFunction(thisNode, recFrame) {
 }
 
 function brakesFuncion(thisNode, recFrame) {
-    console.log("increasing the brake load by " + recFrame.dataField);
+    // console.log("increasing the brake load by " + recFrame.dataField);
     if(recFrame.id == IDS.brake){
-        console.log("really increasing the brake load by " + recFrame.dataField);
+        console.log("increasing the brake load by " + recFrame.dataField);
         car.brakesLoad += recFrame.dataField;
     }
 }

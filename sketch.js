@@ -29,9 +29,8 @@ const Node = {
     newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
-    this.stuffFrame(newFrame.bitFrame);
     // LAST CHECKPOINT TODO!! assign the stuffed frame
-    this.sendFrameRegister = newFrame.bitFrame;
+    this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame);
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
     this.state = WAITING;
@@ -41,8 +40,7 @@ const Node = {
     newFrame.constructRemoteFrame(this.id, 1);
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
-    this.stuffFrame(newFrame.bitFrame, true);
-    this.sendFrameRegister = newFrame.bitFrame;
+    this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame, true);
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
     this.state = WAITING;
@@ -64,7 +62,7 @@ const Node = {
   decodeFrame() {
     newFrame = Object.create(Frame);
     bitstring = this.receivedFrameRegister;
-    // bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO! change back to destuffing after checking
+    bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO! change back to destuffing after checking
     newFrame.id = parseInt( bitstring.substring(1, 12), 2 );
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
@@ -110,12 +108,12 @@ const Node = {
     //   console.log("previous frame was:\n", bitstring);
     //   console.log("the new frame should be:\n", newBitFrame);
     // }
-    let plsCheck = this.destuffFrame(newBitFrame);   // DEBUG
+    let plsCheck = this.destuffFrameTest(newBitFrame);   // DEBUG
     console.log(plsCheck == bitstring ? "ALL GOOD" : "NOT GOOD ERROR AT DESTUFFING!!!", "- - - - - -", this.name);  
     // TODO return stuffed frame:
-    // return newBitFrame;
+    return newBitFrame;
   },
-  destuffFrame(bitstring) {
+  destuffFrameTest(bitstring) {
     let len = bitstring.length;
     len -= ( 1 + 1 + 1 + 7 + 3);
     let polarity = bitstring[0];
@@ -157,6 +155,50 @@ const Node = {
     //   console.log("stuffed frame was:\n", bitstring);
     //   console.log("the destuffed frame should be:\n", newBitFrame);
     // }
+    return newBitFrame;
+  },
+  destuffFrame(bitstring) {
+    let len = bitstring.length;
+    len -= ( 1 + 1 + 1);
+    let polarity = bitstring[0];
+    let samePolarity = 1;
+    let newBitFrame = polarity;
+    let stuffed = 0;
+    let i = 1;
+    let isRf = 0;
+    while (i < len) {
+      newBitFrame += bitstring[i];
+      if(i - stuffed == 12){
+        if(bitstring[i] == 1){
+          console.log("this is a remote frame");
+          isRf = 1;
+          len += 3;
+        }
+      }
+      if(bitstring[i] == polarity){
+        samePolarity ++;
+        if(samePolarity == 5){
+          i ++;                       // skip the stuff bit
+          // console.log("found stuff bit at potition", i);    // DEBUG
+          samePolarity = 1;
+          polarity = (polarity == "0") ? "1" : "0";
+          stuffed ++;
+        }
+      }
+      else{
+        polarity = bitstring[i];
+        samePolarity = 1;
+      }
+      i ++;
+    }
+    if(! isRf){
+      newBitFrame += bitstring.slice(-3);
+    }
+    if (stuffed > 0){
+      console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
+      console.log("stuffed frame was:\n", bitstring);
+      console.log("the destuffed frame should be:\n", newBitFrame);
+    }
     return newBitFrame;
   }
 }
@@ -291,7 +333,7 @@ const bus = {
   nextIsStuff: false,
   checkStuffBits(busValue){
     if(bus.nextIsStuff){
-      bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);
+      bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);   // TODO check for errors here
       bus.polarity = 1 - bus.polarity;
       bus.bitsOfSamePolarity = 1;
       bus.nextIsStuff = false;
@@ -348,8 +390,8 @@ function setup() {
 function receiveFrame() {
   // console.log(bus.currentFrame);
   nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation  
-  let receivedFrame = nodes[0].decodeFrame();           
-  // console.log("Nodes have received the frame:"+receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1 , I think it is but should check
+  console.log("received frame is:\n", bus.currentFrame);
+  let receivedFrame = nodes[0].decodeFrame();
   for(let n of nodes) {
     if(n.sensitivity.includes(receivedFrame.id)) {
       funForNode(n, receivedFrame);
@@ -399,7 +441,7 @@ function updateData() {
         n.incrementSendFramePointer();
       }
     });
-    if(bus.frameToDisplay.length == 12) {      // TODO change with condition variable for stuff bits -> read the size of map
+    if(bus.frameToDisplay.length == 12 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)) {      // TODO change with condition variable for stuff bits -> read the size of map
       nodesToTransmit.forEach((n) => {
         if(n.state == TRANSMITTING){
           winnerNode = n;
@@ -415,7 +457,7 @@ function updateData() {
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer();
-    if(bus.frameToDisplay.length == 7){
+    if(bus.frameToDisplay.length == 7 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
       resetWaitingNodes();
       if(winnerNode.sendFrameInMemory.rtr == 1){
         bus.ack = 1;
@@ -431,24 +473,24 @@ function updateData() {
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer();
-    if(bus.frameToDisplay.length == 8*winnerNode.sendFrameInMemory.dlc){
+    if(bus.frameToDisplay.length == 8*winnerNode.sendFrameInMemory.dlc  + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
       bus.nextFramePart();
     }
   }
   else if(bus.state == CRC) {
     bus.clearFrameToDisplay();
-    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();                  // TODO! logic for not checking right after crc - maybe refactor new bus state for ack
     bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer(); 
-    if(bus.frameToDisplay.length == 17){      // CRC delimiter
-      if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO bus.error == 0
+    if(bus.frameToDisplay.length == 17 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){      // CRC delimiter
+      if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO if(bus.error == 0)   TODO!!! for errors
         generateNodesToAcknowledge();
         bus.ack = 1;
         bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + "0";
         winnerNode.sendFrameInMemory.ack = 0;
       }
     }
-    else if(bus.frameToDisplay.length == 18){
+    else if(bus.frameToDisplay.length == 18  + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
       nodesToAcknowledge = new Set();
       bus.nextFramePart();
     }
@@ -460,7 +502,7 @@ function updateData() {
     }
     bus.ack = 0;
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
-    winnerNode.incrementSendFramePointer();                           // TODO! implement logic for storing the frame in interested nodes and in previous frame
+    winnerNode.incrementSendFramePointer();                           
     if(bus.frameToDisplay.length == 7){
       bus.nextFramePart();
       previousFrame = winnerNode.sendFrameInMemory;
