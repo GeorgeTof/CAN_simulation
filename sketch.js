@@ -38,7 +38,7 @@ const Node = {
     let newFrame = Object.create(Frame);
     newFrame.constructRemoteFrame(this.id, 1);
     this.sendFrameInMemory = newFrame;
-    newFrame.computeFrame();    // LAST CHECKPOINT TODO!! compute frame for remote frame
+    newFrame.computeFrame();
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -226,6 +226,7 @@ let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
+let nodesToAcknowledge = new Set();
 let nodesThatReceived = new Map();
 let pressedKeys = new Map();
 let previousFrame = null;   
@@ -344,23 +345,25 @@ function updateData() {
     bus.clearFrameToDisplay();
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer(); 
-    if(bus.frameToDisplay.length == 16){      // CRC delimiter
-      if(bus.error == 0){
+    if(bus.frameToDisplay.length == 17){      // CRC delimiter
+      if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO bus.error == 0
         generateNodesToAcknowledge();
+        bus.ack = 1;
+        bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + "0";
+        winnerNode.sendFrameInMemory.ack = 0;
       }
     }
     else if(bus.frameToDisplay.length == 18){
+      nodesToAcknowledge = new Set();
       bus.nextFramePart();
-      bus.ack = 1;                        // TODO! implement logic for ack bit
-      // console.log("Now set the ACK!");
     }
   }
   else if(bus.state == EOF) {
     bus.clearFrameToDisplay();
     if(bus.ack == 1){
-      bus.ack = 0;
       receiveFrame();
     }
+    bus.ack = 0;
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();                           // TODO! implement logic for storing the frame in interested nodes and in previous frame
     if(bus.frameToDisplay.length == 7){
@@ -374,8 +377,9 @@ function updateData() {
 
 function generateNodesToAcknowledge() {
   const idleNodes = nodes.filter(n => n.state == RECEIVING);
-  console.log("Candidates for acknowledgement are");
-  console.log(idleNodes);
+  idleNodes.forEach(n => {
+    nodesToAcknowledge.add(n);
+  });
 }
 
 function resetWaitingNodes() {
@@ -576,6 +580,17 @@ function printNodesToTransmit() {
     let label2 = tn.sendFrameRegister.slice(0, tn.sendFramePointer);
     if(tn.state == WAITING){
       label2 += " -- Waiting";  
+    }
+    text(label, 200, y);
+    text(label2, 320, y);
+    y+=20;
+  }
+  for (let an of nodesToAcknowledge) {
+    let label = ">>" + an.name + ": ";
+    let label2 = "0";
+    if(an.state == WAITING){
+      // label2 += " -- Waiting";  
+      continue;
     }
     text(label, 200, y);
     text(label2, 320, y);
