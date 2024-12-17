@@ -29,6 +29,8 @@ const Node = {
     newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
+    this.stuffFrame(newFrame.bitFrame);
+    // LAST CHECKPOINT TODO!! assign the stuffed frame
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -60,7 +62,8 @@ const Node = {
   },
   decodeFrame() {
     newFrame = Object.create(Frame);
-    bitstring = this.destuffFrame(this.receivedFrameRegister);
+    bitstring = this.receivedFrameRegister;
+    // bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO change back to destuffing after checking
     newFrame.id = parseInt( bitstring.substring(1, 12), 2 );
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
@@ -72,9 +75,81 @@ const Node = {
     }
     return newFrame;
   },
+  stuffFrame(bitstring) {
+    // just for data frames for now TODO! for remote frames
+    let len = bitstring.length;
+    len -= ( 1 + 1 + 1 + 7 + 3);      // stop when we reach crcD
+    let i = 1;
+    let polarity = bitstring[0];
+    let samePolarity = 1;
+    let newBitFrame = polarity;
+    let stuffed = 0;
+    while (i < len) {
+      newBitFrame += bitstring[i];
+      if(bitstring[i] == polarity){
+        samePolarity ++;
+        if(samePolarity == 5){
+          newBitFrame += (polarity == "0") ? "1" : "0";   // add the stuff bit
+          console.log("add stuff bit at potition", i);    // DEBUG
+          samePolarity = 0;
+          stuffed ++;
+        }
+      }
+      else{
+        polarity = bitstring[i];
+        samePolarity = 1;
+      }
+      i ++;
+    }
+    for(let i = 0; i < 13; i++){
+      newBitFrame += "1";
+    }
+    if (stuffed < 0){
+      console.log("Stuffed the frame with", stuffed, "bits");   // DEBUG
+      console.log("previous frame was:\n", bitstring);
+      console.log("the new frame should be:\n", newBitFrame);
+    }
+    let plsCheck = this.destuffFrame(newBitFrame);   // DEBUG
+    console.log(plsCheck == bitstring ? "ALL GOOD" : "NOT GOOD ERROR!!!");
+    // TODO return stuffed frame:
+    // return newBitFrame;
+  },
   destuffFrame(bitstring) {
     // TODO! destuffing
-    return bitstring;
+    // for remote frame - we have to check if the rtr bit
+    let len = bitstring.length;
+    len -= ( 1 + 1 + 1 + 7 + 3);
+    let polarity = bitstring[0];
+    let samePolarity = 1;
+    let newBitFrame = polarity;
+    let stuffed = 0;
+    let i = 1;
+    while (i < len) {
+      newBitFrame += bitstring[i];
+      if(bitstring[i] == polarity){
+        samePolarity ++;
+        if(samePolarity == 5){
+          i ++;                       // skip the stuff bit
+          console.log("found stuff bit at potition", i);    // DEBUG
+          samePolarity = 0;
+          stuffed ++;
+        }
+      }
+      else{
+        polarity = bitstring[i];
+        samePolarity = 1;
+      }
+      i ++;
+    }
+    for(let i = 0; i < 13; i++){
+      newBitFrame += "1";
+    }
+    if (stuffed < 0){
+      console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
+      console.log("stuffed frame was:\n", bitstring);
+      console.log("the destuffed frame should be:\n", newBitFrame);
+    }
+    return newBitFrame;
   }
 }
 
