@@ -41,6 +41,7 @@ const Node = {
     newFrame.constructRemoteFrame(this.id, 1);
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
+    this.stuffFrame(newFrame.bitFrame, true);         // NOT TESTED YET FOR REMOTE FRAME TODO!!!
     this.sendFrameRegister = newFrame.bitFrame;
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -75,10 +76,9 @@ const Node = {
     }
     return newFrame;
   },
-  stuffFrame(bitstring) {
-    // just for data frames for now TODO! for remote frames
+  stuffFrame(bitstring, rtrFrame = false) {
     let len = bitstring.length;
-    len -= ( 1 + 1 + 1 + 7 + 3);      // stop when we reach crcD
+    len -= (rtrFrame ? 10 : 13);      // stop when we reach crcD
     let i = 1;
     let polarity = bitstring[0];
     let samePolarity = 1;
@@ -90,7 +90,7 @@ const Node = {
         samePolarity ++;
         if(samePolarity == 5){
           newBitFrame += (polarity == "0") ? "1" : "0";   // add the stuff bit
-          console.log("add stuff bit at potition", i);    // DEBUG
+          // console.log("add stuff bit at potition", i);    // DEBUG
           samePolarity = 0;
           stuffed ++;
         }
@@ -101,22 +101,20 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < 13; i++){
+    for(let i = 0; i < (rtrFrame ? 10 : 13); i++){
       newBitFrame += "1";
     }
-    if (stuffed < 0){
-      console.log("Stuffed the frame with", stuffed, "bits");   // DEBUG
-      console.log("previous frame was:\n", bitstring);
-      console.log("the new frame should be:\n", newBitFrame);
-    }
+    // if (stuffed > 0){
+    //   console.log("Stuffed the frame with", stuffed, "bits");   // DEBUG
+    //   console.log("previous frame was:\n", bitstring);
+    //   console.log("the new frame should be:\n", newBitFrame);
+    // }
     let plsCheck = this.destuffFrame(newBitFrame);   // DEBUG
-    console.log(plsCheck == bitstring ? "ALL GOOD" : "NOT GOOD ERROR!!!");
+    console.log(plsCheck == bitstring ? "ALL GOOD" : "NOT GOOD ERROR AT DESTUFFING!!!", "- - - - - -", this.name);  
     // TODO return stuffed frame:
     // return newBitFrame;
   },
   destuffFrame(bitstring) {
-    // TODO! destuffing
-    // for remote frame - we have to check if the rtr bit
     let len = bitstring.length;
     len -= ( 1 + 1 + 1 + 7 + 3);
     let polarity = bitstring[0];
@@ -124,13 +122,21 @@ const Node = {
     let newBitFrame = polarity;
     let stuffed = 0;
     let i = 1;
+    let isRf = 0;
     while (i < len) {
       newBitFrame += bitstring[i];
+      if(i - stuffed == 12){
+        if(bitstring[i] == 1){
+          console.log("this is a remote frame");
+          isRf = 1;
+          len += 3;
+        }
+      }
       if(bitstring[i] == polarity){
         samePolarity ++;
         if(samePolarity == 5){
           i ++;                       // skip the stuff bit
-          console.log("found stuff bit at potition", i);    // DEBUG
+          // console.log("found stuff bit at potition", i);    // DEBUG
           samePolarity = 0;
           stuffed ++;
         }
@@ -141,14 +147,14 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < 13; i++){
+    for(let i = 0; i < (isRf ? 10 : 13); i++){
       newBitFrame += "1";
     }
-    if (stuffed < 0){
-      console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
-      console.log("stuffed frame was:\n", bitstring);
-      console.log("the destuffed frame should be:\n", newBitFrame);
-    }
+    // if (stuffed > 0){
+    //   console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
+    //   console.log("stuffed frame was:\n", bitstring);
+    //   console.log("the destuffed frame should be:\n", newBitFrame);
+    // }
     return newBitFrame;
   }
 }
@@ -183,7 +189,7 @@ const Frame = {
     this.partialFrame = pf;
   },
   computeFrame() {
-    this.computePartialFrame();   // COMPLETE FUNCTIONALITY NOT TESTED
+    this.computePartialFrame();
     // console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
     let f = this.partialFrame;
     if(this.rtr == 0){
