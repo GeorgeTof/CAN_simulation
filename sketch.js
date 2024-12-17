@@ -188,7 +188,7 @@ const bus = {
       this.state = EOF;
     }
     else{
-      this.state = (this.state+1) % 6; 
+      this.state = (this.state+1) % 6;    
     }
     this.changedState = true;
   },
@@ -228,7 +228,6 @@ let nodes = [];
 const nodesToTransmit = new Set();
 let nodesThatReceived = new Map();
 let pressedKeys = new Map();
-// letpreviousFrame = null;
 let previousFrame = null;   
 let pause = 0;
 let winnerNode = null;
@@ -256,8 +255,8 @@ function setup() {
 
 function receiveFrame() {
   // console.log(bus.currentFrame);
-  nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation
-  receivedFrame = nodes[0].decodeFrame();
+  nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation  
+  let receivedFrame = nodes[0].decodeFrame();           // TODO! implement decoding of the stuff bits
   // console.log("Nodes have received the frame:"+receivedFrame.displayData()); // NOT TESTED YET FOR DLC > 1
   for(let n of nodes) {
     if(n.sensitivity.includes(receivedFrame.id)) {
@@ -323,6 +322,7 @@ function updateData() {
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();
     if(bus.frameToDisplay.length == 7){
+      resetWaitingNodes();
       if(winnerNode.sendFrameInMemory.rtr == 1){
         bus.ack = 1;
         bus.nextFramePart(true);
@@ -343,10 +343,16 @@ function updateData() {
   else if(bus.state == CRC) {
     bus.clearFrameToDisplay();
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
-    winnerNode.incrementSendFramePointer();                           
-    if(bus.frameToDisplay.length == 18){
+    winnerNode.incrementSendFramePointer(); 
+    if(bus.frameToDisplay.length == 16){      // CRC delimiter
+      if(bus.error == 0){
+        generateNodesToAcknowledge();
+      }
+    }
+    else if(bus.frameToDisplay.length == 18){
       bus.nextFramePart();
       bus.ack = 1;                        // TODO! implement logic for ack bit
+      // console.log("Now set the ACK!");
     }
   }
   else if(bus.state == EOF) {
@@ -362,7 +368,21 @@ function updateData() {
       previousFrame = winnerNode.sendFrameInMemory;
       winnerNode.endTransmission();
     }
-    // bus.clearFrameToDisplay();       // 
+    // bus.clearFrameToDisplay();
+  }
+}
+
+function generateNodesToAcknowledge() {
+  const idleNodes = nodes.filter(n => n.state == RECEIVING);
+  console.log("Candidates for acknowledgement are");
+  console.log(idleNodes);
+}
+
+function resetWaitingNodes() {
+  for(let n of nodesToTransmit){
+    if(n.state == WAITING){
+      n.sendFramePointer = 0;
+    }
   }
 }
 
@@ -380,7 +400,9 @@ function checkTransmittingNodes() {
       }
     }
   }
-  // also update the state of nodes that have received for displaying
+}
+
+function updateNodesThatReceived() {
   for (let [key, val] of nodesThatReceived.entries()){
     if (val > 0){
       nodesThatReceived.set(key, val - 1);
@@ -426,7 +448,8 @@ function draw() {
     lastClock = clock;
     updateData();
     updateSimulation();
-    checkTransmittingNodes();    // DEBUG isolate the interactive nodes for better trace
+    checkTransmittingNodes();
+    updateNodesThatReceived();
   }
 
   printNodes(nodes);
