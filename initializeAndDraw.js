@@ -1,7 +1,7 @@
 function setupNodes(nodes) {
   let n = Object.create(Node);      // sketchy ca Node e declarat in sketch :/
   n.name = "Acceleration";
-  n.id = 5;
+  n.id = IDS.acceleration;
   n.key = 'w';
   n.defaultData = -1;
   n.x = 200;
@@ -11,7 +11,7 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node); 
   n.name = "Brake";
-  n.id = 3;
+  n.id = IDS.brake;
   n.key = 's';
   n.defaultData = -1;
   n.x = 140;
@@ -19,7 +19,7 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node); 
   n.name = "Start Button";
-  n.id = 4;
+  n.id = IDS.startButton;
   n.key = 'k';
   n.defaultData = -2;
   n.x = 290;
@@ -29,14 +29,14 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor sensors";
-  n.id = 401;
+  n.id = IDS.motorSensors;
   n.x = 370;
   n.y = 220;
   n.periodForTransmission = 25;   // shorter than period of a data frame of dlc = 1
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Motor";
-  n.id = 2000;
+  n.id = IDS.motor;
   n.x = 300;
   n.y = 220;
   n.sensitivity = [5, 4];
@@ -44,7 +44,7 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Dashboard";
-  n.id = 1900;
+  n.id = IDS.dashboard;
   n.x = 450;
   n.y = 60;
   n.sensitivity = [401];
@@ -52,7 +52,7 @@ function setupNodes(nodes) {
   nodes.push(n);
   n = Object.create(Node);
   n.name = "Brakes";
-  n.id = 1000;
+  n.id = IDS.brakes;
   n.x = 620;
   n.y = 220;
   n.sensitivity = [3];

@@ -3,10 +3,10 @@ function funForNode(thisNode, recFrame) {                                   // D
 }
 
 function motorFunction(thisNode, recFrame) {
-    if(recFrame.id == 5){   // acceleration
+    if(recFrame.id == IDS.acceleration){
         car.motorLoad += recFrame.dataField;
     }
-    else if(recFrame.id == 4){  // start button
+    else if(recFrame.id == IDS.startButton){
         if(recFrame.rtr == 0){  // is a data frame
             car.started = recFrame.dataField;
         }
@@ -20,8 +20,7 @@ function accelerationFunction(thisNode, recFrame) {
 }
 
 function startButtonFunction(thisNode, recFrame) {
-    // LAST CHECKPOINT 
-    if(recFrame.id == 5){
+    if(recFrame.id == IDS.acceleration){
         if(recFrame.dataField == 0){
             thisNode.generateDataFrame(1);
         }
@@ -30,7 +29,7 @@ function startButtonFunction(thisNode, recFrame) {
 
 function brakesFuncion(thisNode, recFrame) {
     console.log("increasing the brake load by " + recFrame.dataField);
-    if(recFrame.id == 3){   // brakes
+    if(recFrame.id == IDS.brake){
         console.log("really increasing the brake load by " + recFrame.dataField);
         car.brakesLoad += recFrame.dataField;
     }
@@ -45,7 +44,7 @@ function generateMotorSensorsData() {
 }
 
 function dashboardFunction(thisNode, recFrame) {
-    if(recFrame.id == 401){     //motor sensors
+    if(recFrame.id == IDS.motorSensors){
         thisNode.dataRegister = recFrame.dataField % 256;
         if(Math.floor(recFrame.dataField / 256) > 45){     // if temperature greater tha treshold
             thisNode.dataRegister2 = 1;                 // set the check engine register indefinietly

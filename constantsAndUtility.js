@@ -4,11 +4,14 @@ const TRANSMITTING = 1, RECEIVING = 0 /* AKA idle */ , WAITING = 2;
 const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, EOF = 4, IDLE = 5;
 const TIME_TO_SHOW_RECEIVAL = 10;
 
-const ids = {
+const IDS = {
   acceleration: 5,
-  speedSensor: 1000,
+  brake: 3,
+  startButton: 4,
+  motorSensors: 401,
   motor: 2000,
-  speedometer: 1900
+  dashboard: 1900,
+  brakes: 1000
 }
 
 const colors = {
