@@ -91,11 +91,11 @@ function printPreviousFrame(previousFrame) {
     x = printBits(extendBits(previousFrame.crc, 15), x, y, "yellow");  
 
     x = printBits(extendBits(previousFrame.crcD, 1), x, y, "gray");  
-
-    x = printBits(extendBits(previousFrame.ack, 1), x, y, "green");  
-
-    x = printBits(extendBits(previousFrame.ackD, 1), x, y, "gray");  
   }
+
+  x = printBits(extendBits(previousFrame.ack, 1), x, y, "green");
+
+  x = printBits(extendBits(previousFrame.ackD, 1), x, y, "gray");  
 
   x = printBits(extendBits(previousFrame.eof, 7), x, y, "gray");    
 

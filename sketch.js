@@ -29,7 +29,6 @@ const Node = {
     newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
-    // LAST CHECKPOINT TODO!! assign the stuffed frame
     this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame);
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
@@ -40,7 +39,7 @@ const Node = {
     newFrame.constructRemoteFrame(this.id, 1);
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
-    this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame, true);
+    this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame);
     this.sendFramePointer = 0;
     nodesToTransmit.add(this);
     this.state = WAITING;
@@ -124,13 +123,13 @@ const Node = {
     let isRf = 0;
     while (i < len) {
       newBitFrame += bitstring[i];
-      if(i - stuffed == 12){
-        if(bitstring[i] == 1){
-          console.log("this is a remote frame");
-          isRf = 1;
-          len += 2;
-        }
-      }
+      // if(i - stuffed == 12){         // not important anymore
+      //   if(bitstring[i] == 1){
+      //     console.log("this is a remote frame");
+      //     isRf = 1;
+      //     len += 2;
+      //   }
+      // }
       if(bitstring[i] == polarity){
         samePolarity ++;
         if(samePolarity == 5){
@@ -147,7 +146,7 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < (isRf ? 10 : 12); i++){
+    for(let i = 0; i < (isRf ? 10 : 12); i++){      // isrf always false
       newBitFrame += "1";
     }
     // if (stuffed > 0){
@@ -168,13 +167,13 @@ const Node = {
     let isRf = 0;
     while (i < len) {
       newBitFrame += bitstring[i];
-      if(i - stuffed == 12){
-        if(bitstring[i] == 1){
-          console.log("this is a remote frame");
-          isRf = 1;
-          len += 2;
-        }
-      }
+      // if(i - stuffed == 12){
+      //   if(bitstring[i] == 1){
+      //     console.log("this is a remote frame");
+      //     isRf = 1;
+      //     len += 2;
+      //   }
+      // }
       if(bitstring[i] == polarity){
         samePolarity ++;
         if(samePolarity == 5){
@@ -191,7 +190,7 @@ const Node = {
       }
       i ++;
     }
-    if(! isRf){
+    if(! isRf){                                 // isrf always false TODO! remove if
       newBitFrame += bitstring.slice(-2);
     }
     if (stuffed > 0){
@@ -239,9 +238,9 @@ const Frame = {
     if(this.rtr == 0){
       f += calculateCRC_dummy(this.partialFrame);
       f += extendBits(this.crcD, 1);
-      f += extendBits(this.ack, 1);
-      f += extendBits(this.ackD, 1);
     }
+    f += extendBits(this.ack, 1);
+    f += extendBits(this.ackD, 1);
     f += extendBits(this.eof, 7);
     f += extendBits(this.ifs, 3);
     this.bitFrame = f;
@@ -283,6 +282,8 @@ RTR: ${this.rtr}
 IDE: ${this.ide}
 Reserved: ${this.reserved}
 DLC: ${this.dlc}
+ACK: ${this.ack}
+ACK Delimiter: ${this.ackD}
 EOF: ${this.eof}
 IFS: ${this.ifs}
 Bit Frame: ${this.bitFrame}`;
@@ -310,7 +311,7 @@ const bus = {
   changedState: false,
   nextFramePart(rtrFrame = false){
     if(rtrFrame == true){
-      this.state = EOF;
+      this.state = ACK;       
     }
     else{
       this.state = (this.state+1) % 7;    
