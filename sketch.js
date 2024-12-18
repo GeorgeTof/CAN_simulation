@@ -76,7 +76,7 @@ const Node = {
   },
   stuffFrame(bitstring, rtrFrame = false) {
     let len = bitstring.length;
-    len -= (rtrFrame ? 10 : 13);      // stop when we reach crcD
+    len -= (rtrFrame ? 10 : 12);      // stop when we reach (not crcD) ACK
     let i = 1;
     let polarity = bitstring[0];
     let samePolarity = 1;
@@ -100,7 +100,7 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < (rtrFrame ? 10 : 13); i++){
+    for(let i = 0; i < (rtrFrame ? 10 : 12); i++){
       newBitFrame += "1";
     }
     // if (stuffed > 0){
@@ -115,7 +115,7 @@ const Node = {
   },
   destuffFrameTest(bitstring) {
     let len = bitstring.length;
-    len -= ( 1 + 1 + 1 + 7 + 3);
+    len -= ( 1 + 1 + 7 + 3);
     let polarity = bitstring[0];
     let samePolarity = 1;
     let newBitFrame = polarity;
@@ -128,7 +128,7 @@ const Node = {
         if(bitstring[i] == 1){
           console.log("this is a remote frame");
           isRf = 1;
-          len += 3;
+          len += 2;
         }
       }
       if(bitstring[i] == polarity){
@@ -147,7 +147,7 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < (isRf ? 10 : 13); i++){
+    for(let i = 0; i < (isRf ? 10 : 12); i++){
       newBitFrame += "1";
     }
     // if (stuffed > 0){
@@ -159,7 +159,7 @@ const Node = {
   },
   destuffFrame(bitstring) {
     let len = bitstring.length;
-    len -= ( 1 + 1 + 1);
+    len -= ( 1 + 1);
     let polarity = bitstring[0];
     let samePolarity = 1;
     let newBitFrame = polarity;
@@ -172,7 +172,7 @@ const Node = {
         if(bitstring[i] == 1){
           console.log("this is a remote frame");
           isRf = 1;
-          len += 3;
+          len += 2;
         }
       }
       if(bitstring[i] == polarity){
@@ -192,7 +192,7 @@ const Node = {
       i ++;
     }
     if(! isRf){
-      newBitFrame += bitstring.slice(-3);
+      newBitFrame += bitstring.slice(-2);
     }
     if (stuffed > 0){
       console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
@@ -496,6 +496,9 @@ function updateData() {
         bus.ack = 1;
         bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + "0";
         winnerNode.sendFrameInMemory.ack = 0;
+      }
+      else{
+        //  TODO! generate new frame
       }
     }
     else if(bus.frameToDisplay.length == 2){
