@@ -185,13 +185,19 @@ function printCarParameters() {
   y+=15;
   text("simulation speed:", x, y);
   text((1/period*100).toFixed(2), xVal, y);            
+  if(car.errors > 0){
+    y+=15;
+    text("errors introduced:", x, y);
+    text(car.errors, xVal, y);
+    analogDraw(car.errors*10 , xLine, y, 6, "red");
+  }
   // text(period, xVal, y);            
 
 }
 
 function printInstructions() {
   textSize(15);
-  let x = 1000, y = 270, xText = 1070;
+  let x = 1000, y = 270, xText = 1060;
 
   text("Commands:", x, y);
   y+=25;
@@ -204,6 +210,8 @@ function printInstructions() {
   y = printCommand("Press the acceleration pedal", x, y, xText, wKeyImg);
   y = printCommand("Press the break pedal", x, y, xText, sKeyImg);
   y = printCommand("Press the start button", x, y, xText, kKeyImg);
+
+  y = printCommand("Simulate errors", x, y, xText, rKeyImg);
 
 }
 

@@ -377,6 +377,7 @@ function preload() {
   sKeyImg = loadImage('resource/s-key.png');
   kKeyImg = loadImage('resource/k-key.png');
   pKeyImg = loadImage('resource/p-key.png');
+  rKeyImg = loadImage('resource/r-key.png');
 }
 
 function setup() {
@@ -623,6 +624,9 @@ function draw() {
 function keyPressed() {
   if (key == 'p') {
     pause = (pause + 1) % 2;
+  }
+  else if (key == 'r') {
+    car.errors ++;
   }
   else if (keyCode === UP_ARROW) {
     if(period == 50){
