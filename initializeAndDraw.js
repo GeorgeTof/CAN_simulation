@@ -132,7 +132,7 @@ function printNodes(nodes) {
     else if(nodesThatReceived.has(n.id)){
       fill(colorOf("darkGreen"));
     }
-    else if(nodesToAcknowledge.has(n)){
+    else if(acknowledge == 1){
       fill(colorOf("darkBlue"));
     }
     text(n.name, n.x, n.y);

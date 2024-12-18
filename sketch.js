@@ -284,7 +284,7 @@ const bus = {
   checkStuffBits(busValue){
     if(bus.nextIsStuff){
       bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);  
-      if(car.errors > 0 && clock % 2 == 0){                                             // 1/2 chance of introducing the error
+      if(car.errors > 0){                                             //  if(car.errors > 0 && clock % 2 == 0)  for 1/2 chance of introducing the error
         bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + String(bus.polarity);
         car.errors --;
         bus.error = 1;
@@ -315,7 +315,7 @@ let lastClock = 1;
 let lastSecond = 0;
 let nodes = [];
 const nodesToTransmit = new Set();
-let nodesToAcknowledge = new Set();
+let acknowledge = 0;
 let nodesThatReceived = new Map();
 let pressedKeys = new Map();
 let previousFrame = null;   
@@ -448,7 +448,7 @@ function updateData() {
     winnerNode.incrementSendFramePointer(); 
     if(bus.frameToDisplay.length == 1){      // ACK bit
       if(bus.error == 0){
-        generateNodesToAcknowledge();
+        acknowledge = 1;
         bus.ack = 1;
         bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + "0";
         winnerNode.sendFrameInMemory.ack = 0;
@@ -458,7 +458,7 @@ function updateData() {
       }
     }
     else if(bus.frameToDisplay.length == 2){
-      nodesToAcknowledge = new Set();
+      acknowledge = 0;
       bus.nextFramePart();
     }
   }
@@ -483,13 +483,6 @@ function updateData() {
     }
     // bus.clearFrameToDisplay();
   }
-}
-
-function generateNodesToAcknowledge() {
-  const idleNodes = nodes.filter(n => n.state == RECEIVING);
-  idleNodes.forEach(n => {
-    nodesToAcknowledge.add(n);
-  });
 }
 
 function resetWaitingNodes() {
@@ -695,22 +688,28 @@ function printNodesToTransmit() {
     let label = ">>" + tn.name + ": ";
     let label2 = tn.sendFrameRegister.slice(0, tn.sendFramePointer);
     if(tn.state == WAITING){
+      if(acknowledge == 1){
+        label2 += "0";
+      }
       label2 += " -- Waiting";  
     }
     text(label, 200, y);
     text(label2, 320, y);
     y+=20;
   }
-  for (let an of nodesToAcknowledge) {
-    let label = ">>" + an.name + ": ";
-    let label2 = "0";
-    if(an.state == WAITING){
-      // label2 += " -- Waiting";  
-      continue;
+  if(acknowledge == 1){
+    const idleNodes = nodes.filter(n => n.state == RECEIVING);
+    for(let an of idleNodes) {
+      let label = ">>" + an.name + ": ";
+      let label2 = "0";
+      if(an.state == WAITING){
+        // label2 += " -- Waiting";  
+        continue;
+      }
+      text(label, 200, y);
+      text(label2, 320, y);
+      y+=20;
     }
-    text(label, 200, y);
-    text(label2, 320, y);
-    y+=20;
   }
 }
 
