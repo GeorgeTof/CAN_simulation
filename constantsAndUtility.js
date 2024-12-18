@@ -1,7 +1,7 @@
 const WIDTH = 1395;
 const HEIGHT = 660;
 const TRANSMITTING = 1, RECEIVING = 0 /* AKA idle */ , WAITING = 2;
-const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, EOF = 4, IDLE = 5;
+const ARBITRATION = 0, CONTROL = 1, DATA = 2, CRC = 3, ACK = 4, EOF = 5, IDLE = 6;
 const TIME_TO_SHOW_RECEIVAL = 10;
 
 const IDS = {

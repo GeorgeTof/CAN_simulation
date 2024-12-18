@@ -313,7 +313,7 @@ const bus = {
       this.state = EOF;
     }
     else{
-      this.state = (this.state+1) % 6;    
+      this.state = (this.state+1) % 7;    
     }
     this.changedState = true;
   },
@@ -479,10 +479,18 @@ function updateData() {
   }
   else if(bus.state == CRC) {
     bus.clearFrameToDisplay();
-    bus.frameToDisplay += winnerNode.getCurrentBit().toString();                  // TODO! logic for not checking right after crc - maybe refactor new bus state for ack
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();                  
     bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer(); 
-    if(bus.frameToDisplay.length == 17 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){      // CRC delimiter
+    if(bus.frameToDisplay.length == 16  + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
+      bus.nextFramePart();
+    }
+  }
+  else if(bus.state == ACK) {
+    bus.clearFrameToDisplay();
+    bus.frameToDisplay += winnerNode.getCurrentBit().toString();
+    winnerNode.incrementSendFramePointer(); 
+    if(bus.frameToDisplay.length == 1){      // ACK bit
       if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO if(bus.error == 0)   TODO!!! for errors
         generateNodesToAcknowledge();
         bus.ack = 1;
@@ -490,7 +498,7 @@ function updateData() {
         winnerNode.sendFrameInMemory.ack = 0;
       }
     }
-    else if(bus.frameToDisplay.length == 18  + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
+    else if(bus.frameToDisplay.length == 2){
       nodesToAcknowledge = new Set();
       bus.nextFramePart();
     }
@@ -696,6 +704,9 @@ function printBusMessage() {
       break;
     case CRC:
       bState = "CRC";
+      break;
+    case ACK:
+      bState = "ACK";
       break;
     case EOF:
       bState = "EOF";
