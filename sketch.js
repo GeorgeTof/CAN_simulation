@@ -44,7 +44,7 @@ const Node = {
     nodesToTransmit.add(this);
     this.state = WAITING;
   },
-  getCurrentBit(){
+  getCurrentBit() {
     return Number(this.sendFrameRegister[this.sendFramePointer]);
   },
   incrementSendFramePointer(){
@@ -58,10 +58,14 @@ const Node = {
     this.sendFramePointer = 0;
     nodesToTransmit.delete(this);
   },
+  repeatTransmission() {
+    console.log("node", this.name, "is repeating transmission");  // DEBUG
+    this.sendFramePointer = 0;
+  },
   decodeFrame() {
     newFrame = Object.create(Frame);
     bitstring = this.receivedFrameRegister;
-    bitstring = this.destuffFrame(this.receivedFrameRegister);     // TODO! change back to destuffing after checking
+    bitstring = this.destuffFrame(this.receivedFrameRegister);
     newFrame.id = parseInt( bitstring.substring(1, 12), 2 );
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
@@ -73,9 +77,9 @@ const Node = {
     }
     return newFrame;
   },
-  stuffFrame(bitstring, rtrFrame = false) {
+  stuffFrame(bitstring) {
     let len = bitstring.length;
-    len -= (rtrFrame ? 10 : 12);      // stop when we reach (not crcD) ACK
+    len -= 12;      // stop when we reach (not crcD) ACK
     let i = 1;
     let polarity = bitstring[0];
     let samePolarity = 1;
@@ -99,60 +103,13 @@ const Node = {
       }
       i ++;
     }
-    for(let i = 0; i < (rtrFrame ? 10 : 12); i++){
+    for(let i = 0; i < 12; i++){
       newBitFrame += "1";
     }
     // if (stuffed > 0){
     //   console.log("Stuffed the frame with", stuffed, "bits");   // DEBUG
     //   console.log("previous frame was:\n", bitstring);
     //   console.log("the new frame should be:\n", newBitFrame);
-    // }
-    let plsCheck = this.destuffFrameTest(newBitFrame);   // DEBUG
-    console.log(plsCheck == bitstring ? "ALL GOOD" : "NOT GOOD ERROR AT DESTUFFING!!!", "- - - - - -", this.name);  
-    // TODO return stuffed frame:
-    return newBitFrame;
-  },
-  destuffFrameTest(bitstring) {
-    let len = bitstring.length;
-    len -= ( 1 + 1 + 7 + 3);
-    let polarity = bitstring[0];
-    let samePolarity = 1;
-    let newBitFrame = polarity;
-    let stuffed = 0;
-    let i = 1;
-    let isRf = 0;
-    while (i < len) {
-      newBitFrame += bitstring[i];
-      // if(i - stuffed == 12){         // not important anymore
-      //   if(bitstring[i] == 1){
-      //     console.log("this is a remote frame");
-      //     isRf = 1;
-      //     len += 2;
-      //   }
-      // }
-      if(bitstring[i] == polarity){
-        samePolarity ++;
-        if(samePolarity == 5){
-          i ++;                       // skip the stuff bit
-          // console.log("found stuff bit at potition", i);    // DEBUG
-          samePolarity = 1;
-          polarity = (polarity == "0") ? "1" : "0";
-          stuffed ++;
-        }
-      }
-      else{
-        polarity = bitstring[i];
-        samePolarity = 1;
-      }
-      i ++;
-    }
-    for(let i = 0; i < (isRf ? 10 : 12); i++){      // isrf always false
-      newBitFrame += "1";
-    }
-    // if (stuffed > 0){
-    //   console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
-    //   console.log("stuffed frame was:\n", bitstring);
-    //   console.log("the destuffed frame should be:\n", newBitFrame);
     // }
     return newBitFrame;
   },
@@ -167,18 +124,10 @@ const Node = {
     let isRf = 0;
     while (i < len) {
       newBitFrame += bitstring[i];
-      // if(i - stuffed == 12){
-      //   if(bitstring[i] == 1){
-      //     console.log("this is a remote frame");
-      //     isRf = 1;
-      //     len += 2;
-      //   }
-      // }
       if(bitstring[i] == polarity){
         samePolarity ++;
         if(samePolarity == 5){
           i ++;                       // skip the stuff bit
-          // console.log("found stuff bit at potition", i);    // DEBUG
           samePolarity = 1;
           polarity = (polarity == "0") ? "1" : "0";
           stuffed ++;
@@ -195,8 +144,8 @@ const Node = {
     }
     if (stuffed > 0){
       console.log("Destuffed the frame of", stuffed, "bits");   // DEBUG
-      console.log("stuffed frame was:\n", bitstring);
-      console.log("the destuffed frame should be:\n", newBitFrame);
+      // console.log("stuffed frame was:\n", bitstring);
+      console.log("the destuffed frame is:\n", newBitFrame);
     }
     return newBitFrame;
   }
@@ -334,7 +283,14 @@ const bus = {
   nextIsStuff: false,
   checkStuffBits(busValue){
     if(bus.nextIsStuff){
-      bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);   // TODO check for errors here
+      bus.stuffBits.set(bus.frameToDisplay.length - 1, 1 - bus.polarity);  
+      if(car.errors > 0 && clock % 2 == 0){                                             // 1/2 chance of introducing the error
+        bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + String(bus.polarity);
+        car.errors --;
+        bus.error = 1;
+        console.log("ERROR!");
+        console.log("Actual bus value for stuff bit is", bus.polarity, "when it should be", 1-bus.polarity);
+      } 
       bus.polarity = 1 - bus.polarity;
       bus.bitsOfSamePolarity = 1;
       bus.nextIsStuff = false;
@@ -343,7 +299,6 @@ const bus = {
       bus.bitsOfSamePolarity ++;
       if(bus.bitsOfSamePolarity == 5){
         bus.nextIsStuff = true;
-        console.log("found bit that should be stuff after", bus.frameToDisplay);  // DEBUG
       }
     }
     else{
@@ -455,7 +410,6 @@ function updateData() {
   }
   else if(bus.state == CONTROL) {
     bus.clearFrameToDisplay();
-    // console.log("The node that won the arbitration is "+winnerNode.name);
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     bus.checkStuffBits(winnerNode.getCurrentBit());
     winnerNode.incrementSendFramePointer();
@@ -493,14 +447,14 @@ function updateData() {
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer(); 
     if(bus.frameToDisplay.length == 1){      // ACK bit
-      if(true){     // LAST CHECKPOINT DEBUG ,  CHANGE BACK TO if(bus.error == 0)   TODO!!! for errors
+      if(bus.error == 0){
         generateNodesToAcknowledge();
         bus.ack = 1;
         bus.frameToDisplay = bus.frameToDisplay.slice(0, -1) + "0";
         winnerNode.sendFrameInMemory.ack = 0;
       }
       else{
-        //  TODO! generate new frame
+        console.log("Error found!");      // DEBUG
       }
     }
     else if(bus.frameToDisplay.length == 2){
@@ -510,16 +464,22 @@ function updateData() {
   }
   else if(bus.state == EOF) {
     bus.clearFrameToDisplay();
-    if(bus.ack == 1){
-      receiveFrame();
-    }
-    bus.ack = 0;
+    // if(bus.ack == 1){
+    //   receiveFrame();
+    // }
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();                           
     if(bus.frameToDisplay.length == 7){
       bus.nextFramePart();
       previousFrame = winnerNode.sendFrameInMemory;
-      winnerNode.endTransmission();
+      if(bus.ack == 1){
+        receiveFrame();
+        winnerNode.endTransmission();
+      }
+      else{
+        winnerNode.repeatTransmission();
+      }
+      bus.ack = 0;
     }
     // bus.clearFrameToDisplay();
   }
@@ -692,7 +652,7 @@ function printBusMessage() {
       }
       else{
         fill(colorOf("red"));
-        bus.error = 1;          
+        // bus.error = 1;       // TODO move to stuff check in bus        
       }
     }
     text(bus.frameToDisplay[i], x, y);
