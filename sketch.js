@@ -26,7 +26,7 @@ const Node = {
   generateDataFrame(data) {
     let newFrame = Object.create(Frame);
     newFrame.constructDataFrame(this.id, data);
-    newFrame.crc = 21845;                 // TODO change from dummy to real, modify the function to return an int, not a string
+    // newFrame.crc = 21845;      // change computation in computeFrame           // TODO change from dummy to real, modify the function to return an int, not a string
     this.sendFrameInMemory = newFrame;
     newFrame.computeFrame();
     this.sendFrameRegister = this.stuffFrame(newFrame.bitFrame);
@@ -70,10 +70,14 @@ const Node = {
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
     newFrame.reserved = parseInt( bitstring.substring(14, 15), 2 );
-    newFrame.dlc = parseInt( bitstring.substring(15, 19), 2 );
+    newFrame.dlc = parseInt( bitstring.substring(15, 19), 2 );              // TODO  ACK for remote frame
     if(newFrame.rtr == 0){
       newFrame.dataField = parseInt( bitstring.substring(19, 19+8*newFrame.dlc), 2 );
-      newFrame.crc = parseInt( bitstring.substring(19+8*newFrame.dlc, 19+8*newFrame.dlc + 15), 2 );
+      newFrame.crc = parseInt( bitstring.substring(19+8*newFrame.dlc,      19+8*newFrame.dlc + 15), 2 );
+      newFrame.ack = parseInt( bitstring.substring(19+8*newFrame.dlc + 15 + 1, 19+8*newFrame.dlc + 16 + 1), 2 );   // LAST CHECKPOINT decode ack from previous frame, replace crc_dummy, ack for remote frame
+    }
+    else{
+      newFrame.ack = parseInt( bitstring.substring(19, 20), 2 );
     }
     return newFrame;
   },
@@ -182,7 +186,11 @@ const Frame = {
   },
   computeFrame() {
     this.computePartialFrame();
-    // console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));
+    // console.log("CRC for frame of node - id:", this.id);
+    if(this.rtr == 0){
+      console.log("attempting to compute crc for", this.partialFrame,"first CRC: ", calculateCRC_1(this.partialFrame));        //TODO!!
+      console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));    // DEBUG to not exceed 15 bits
+    }
     let f = this.partialFrame;
     if(this.rtr == 0){
       f += calculateCRC_dummy(this.partialFrame);
@@ -349,6 +357,7 @@ function receiveFrame() {
   nodes[0].receivedFrameRegister = bus.currentFrame;    // decoding performed only by one node to optimize the simulation  
   console.log("received frame is:\n", bus.currentFrame);
   let receivedFrame = nodes[0].decodeFrame();
+  previousFrame = receivedFrame;
   for(let n of nodes) {
     if(n.sensitivity.includes(receivedFrame.id)) {
       funForNode(n, receivedFrame);
@@ -356,7 +365,13 @@ function receiveFrame() {
       nodesThatReceived.set(n.id, TIME_TO_SHOW_RECEIVAL);
     }
   }
+}
 
+function decodeFrameOnlyForDisplay() {
+  let n = Object.create(Node);
+  n.receivedFrameRegister = bus.currentFrame;
+  let receivedFrame = n.decodeFrame();
+  previousFrame = receivedFrame;
 }
 
 function updateData() {
@@ -371,13 +386,12 @@ function updateData() {
       bus.currentFrame = "";
       bus.nextFramePart();
       bus.frameToDisplay = "0";
-      // console.log("Start arbitration stage");
       bus.polarity = 0;
       bus.bitsOfSamePolarity = 1;
       bus.error = 0;
       bus.stuffBits = new Map();
       bus.nextIsStuff = false;
-      bus.ack = 0;  // TODO: move to end of frame to avoid perpetual assignment in idle
+      bus.ack = 0;  
     }
     return;
   }
@@ -398,7 +412,7 @@ function updateData() {
         n.incrementSendFramePointer();
       }
     });
-    if(bus.frameToDisplay.length == 12 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)) {      // TODO change with condition variable for stuff bits -> read the size of map
+    if(bus.frameToDisplay.length == 12 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)) { 
       nodesToTransmit.forEach((n) => {
         if(n.state == TRANSMITTING){
           winnerNode = n;
@@ -416,7 +430,6 @@ function updateData() {
     if(bus.frameToDisplay.length == 7 + bus.stuffBits.size + (bus.nextIsStuff ? 1 : 0)){
       resetWaitingNodes();
       if(winnerNode.sendFrameInMemory.rtr == 1){
-        bus.ack = 1;
         bus.nextFramePart(true);
       }
       else{
@@ -464,19 +477,16 @@ function updateData() {
   }
   else if(bus.state == EOF) {
     bus.clearFrameToDisplay();
-    // if(bus.ack == 1){
-    //   receiveFrame();
-    // }
     bus.frameToDisplay += winnerNode.getCurrentBit().toString();
     winnerNode.incrementSendFramePointer();                           
     if(bus.frameToDisplay.length == 7){
       bus.nextFramePart();
-      previousFrame = winnerNode.sendFrameInMemory;
       if(bus.ack == 1){
         receiveFrame();
         winnerNode.endTransmission();
       }
       else{
+        decodeFrameOnlyForDisplay();
         winnerNode.repeatTransmission();
       }
       bus.ack = 0;
@@ -644,8 +654,7 @@ function printBusMessage() {
         fill(colorOf("brown"));
       }
       else{
-        fill(colorOf("red"));
-        // bus.error = 1;       // TODO move to stuff check in bus        
+        fill(colorOf("red"));      
       }
     }
     text(bus.frameToDisplay[i], x, y);
@@ -743,6 +752,27 @@ function extendBits(nr, size) {
 
 function calculateCRC_dummy(data) {
   return "101010101010101";
+}
+
+function calculateCRC_1(bitstream) {
+  console.log("computing the crc for", bitstream);
+  let sol = 0;
+  let p = 1;
+  for(let i = 0; i < bitstream.length; i ++){
+    if(i % 14 == 0){
+      p *= 10;
+    }
+    if(bitstream[i] == "1"){
+      sol += i*p;
+    }
+  }
+  console.log("calcultated crc_1 value is", sol);
+  if(sol > 32767){
+    sol = sol % 32767;
+    console.log("calcultated crc_1 value actually is", sol);
+  }
+  return extendBits(sol, 15);
+  // LAST CHECKPOINT
 }
 
 function calculateCRC(data, poly = 0x4599, crcLen = 15) {
