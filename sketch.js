@@ -70,11 +70,11 @@ const Node = {
     newFrame.rtr = parseInt( bitstring.substring(12, 13), 2 );
     newFrame.ide = parseInt( bitstring.substring(13, 14), 2 );
     newFrame.reserved = parseInt( bitstring.substring(14, 15), 2 );
-    newFrame.dlc = parseInt( bitstring.substring(15, 19), 2 );              // TODO  ACK for remote frame
+    newFrame.dlc = parseInt( bitstring.substring(15, 19), 2 );              
     if(newFrame.rtr == 0){
       newFrame.dataField = parseInt( bitstring.substring(19, 19+8*newFrame.dlc), 2 );
       newFrame.crc = parseInt( bitstring.substring(19+8*newFrame.dlc,      19+8*newFrame.dlc + 15), 2 );
-      newFrame.ack = parseInt( bitstring.substring(19+8*newFrame.dlc + 15 + 1, 19+8*newFrame.dlc + 16 + 1), 2 );   // LAST CHECKPOINT decode ack from previous frame, replace crc_dummy, ack for remote frame
+      newFrame.ack = parseInt( bitstring.substring(19+8*newFrame.dlc + 15 + 1, 19+8*newFrame.dlc + 16 + 1), 2 );  
     }
     else{
       newFrame.ack = parseInt( bitstring.substring(19, 20), 2 );
@@ -186,14 +186,9 @@ const Frame = {
   },
   computeFrame() {
     this.computePartialFrame();
-    // console.log("CRC for frame of node - id:", this.id);
-    if(this.rtr == 0){
-      console.log("attempting to compute crc for", this.partialFrame,"first CRC: ", calculateCRC_1(this.partialFrame));        //TODO!!
-      console.log("dummy CRC: ", calculateCRC_dummy(this.partialFrame));    // DEBUG to not exceed 15 bits
-    }
     let f = this.partialFrame;
     if(this.rtr == 0){
-      f += calculateCRC_dummy(this.partialFrame);
+      f += calculateCRC(this.partialFrame);
       f += extendBits(this.crcD, 1);
     }
     f += extendBits(this.ack, 1);
@@ -754,44 +749,37 @@ function calculateCRC_dummy(data) {
   return "101010101010101";
 }
 
-function calculateCRC_1(bitstream) {
-  console.log("computing the crc for", bitstream);
-  let sol = 0;
-  let p = 1;
-  for(let i = 0; i < bitstream.length; i ++){
-    if(i % 14 == 0){
-      p *= 10;
-    }
-    if(bitstream[i] == "1"){
-      sol += i*p;
+function calculateCRC(data) {
+  // 1. Convert the input string into an array of numeric bits 
+  let bits = data.split('').map(char => parseInt(char, 10));
+
+  // 2. Append 15 zero bits
+  for (let i = 0; i < 15; i++) {
+    bits.push(0);
+  }
+
+  // 3. Represent the generator polynomial in array form
+  const polyStr = "1100010110011001";
+  const poly = polyStr.split('').map(char => parseInt(char, 10));
+
+  // 4. Perform polynomial long division:
+  //    - If a bit in the original data is 1, XOR the following 16 bits with the polynomial.
+  for (let i = 0; i < data.length; i++) {
+    if (bits[i] === 1) {
+      // XOR bits[i..i+15] with polynomial[0..15]
+      for (let j = 0; j < 16; j++) {
+        bits[i + j] = bits[i + j] ^ poly[j];
+      }
     }
   }
-  console.log("calcultated crc_1 value is", sol);
-  if(sol > 32767){
-    sol = sol % 32767;
-    console.log("calcultated crc_1 value actually is", sol);
-  }
-  return extendBits(sol, 15);
-  // LAST CHECKPOINT
-}
 
-function calculateCRC(data, poly = 0x4599, crcLen = 15) {
-    // Convert the data string to an integer, and shift it left to make space for the CRC bits
-    let dataInt = parseInt(data, 2) << crcLen;
+  // 5. The remainder in the last 15 bits of the bits array.
+  const remainderBits = bits.slice(bits.length - 15);
 
-    // Align the polynomial with the leftmost bit of the data
-    poly = poly << (data.length + crcLen - 1);
+  // 6. Convert remainder array back to a string
+  const remainderStr = remainderBits.join('');
 
-    // Perform bitwise division (modulo-2 division)
-    while ((dataInt.toString(2).length) > crcLen) {
-        if ((dataInt & (1 << (dataInt.toString(2).length - 1))) !== 0) {
-            dataInt ^= poly; // XOR with polynomial
-        }
-        poly >>= 1; // Shift polynomial right to continue division
-    }
-
-    // Convert the remainder to a binary string of length crcLen
-    return dataInt.toString(2).padStart(crcLen, '0');
+  return remainderStr;
 }
 
 function calculateBytes(n) {

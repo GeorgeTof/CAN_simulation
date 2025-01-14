@@ -93,7 +93,7 @@ function printPreviousFrame(previousFrame) {
     x = printBits(extendBits(previousFrame.crcD, 1), x, y, "gray");  
   }
 
-  x = printBits(extendBits(previousFrame.ack, 1), x, y, "green");
+  x = printBits(extendBits(previousFrame.ack, 1), x, y, previousFrame.ack == '0'? "green" : "red");
 
   x = printBits(extendBits(previousFrame.ackD, 1), x, y, "gray");  
 
