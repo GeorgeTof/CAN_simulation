@@ -95,7 +95,6 @@ const Node = {
         samePolarity ++;
         if(samePolarity == 5){
           newBitFrame += (polarity == "0") ? "1" : "0";   // add the stuff bit
-          // console.log("add stuff bit at potition", i);    // DEBUG
           samePolarity = 1;
           polarity = (polarity == "0") ? "1" : "0";
           stuffed ++;
@@ -110,11 +109,6 @@ const Node = {
     for(let i = 0; i < 12; i++){
       newBitFrame += "1";
     }
-    // if (stuffed > 0){
-    //   console.log("Stuffed the frame with", stuffed, "bits");   // DEBUG
-    //   console.log("previous frame was:\n", bitstring);
-    //   console.log("the new frame should be:\n", newBitFrame);
-    // }
     return newBitFrame;
   },
   destuffFrame(bitstring) {
@@ -526,7 +520,6 @@ function updateNodesThatReceived() {
 }
 
 function updateSimulation() {
-  // TODO! increase the car speed and temp only when the car is started
   if(car.motorLoad > 0){
     if(car.started == true){
       car.speed += 2;
