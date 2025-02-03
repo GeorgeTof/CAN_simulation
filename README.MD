@@ -1,6 +1,7 @@
 # CAN Simulation
 
-An interactive and visual simulation of the mechanism the nodes of a car use to communicate through a CAN.
+An interactive and visual simulation of the mechanism the nodes of a car use to communicate through a CAN. <br>
+The project can be accessed online at:  🔗 **[CAN Simulator](https://can-simulator.netlify.app)**  
 
 <p align="center">
   <a href="#description">Description</a> •
@@ -50,6 +51,8 @@ Based on the specification in the **remote transmission request bit**, frames ca
 For **error checking** and **synchronizing the internal clocks** of the connected nodes, the data frames are **'stuffed'** with a bit of the reverse polarity every **5 bits of the same one**.  
 
 If no **errors** or **inconsistencies** are detected, all the nodes of the system will overwrite the **'1'** in the **acknowledgment bit** with a **'0'** to signal the **successful transmission**. The value **'1'** will not be overwritten otherwise, signaling the **transmitting node** to **repeat transmission**.  
+
+For further information please visit 🔗 [Wikipedia](https://en.wikipedia.org/wiki/CAN_bus)
 
 ---
 
